@@ -120,6 +120,8 @@
 | Transfer evaluation | partial primitives | todo | todo | todo |
 | Results analysis | saving primitives | todo | todo | todo |
 
+Baseline notebooks `01-05` now run `ag_news`, `sst2`, `qqp`, and `mnli-m` sequentially by default.
+
 ## Baseline notebooks to add
 
 ### `02_random_coreset_baseline.ipynb`
