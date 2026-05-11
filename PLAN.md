@@ -216,13 +216,15 @@ Goal: собрать результаты в таблицы и графики.
 
 ### Dataset
 
-Первая версия:
+Поддержано в коде:
 
 - AG News.
+- SST-2.
+- QQP.
+- MNLI-m.
 
 Позже можно добавить:
 
-- SST-2;
 - DBpedia;
 - Yahoo Answers;
 - IMDB, если нужна binary classification задача.

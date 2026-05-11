@@ -11,6 +11,8 @@ def create_text_dataloader(
     tokenizer: Any | None = None,
     batch_size: int = 32,
     shuffle: bool = False,
+    num_workers: int = 0,
+    pin_memory: bool = False,
 ) -> DataLoader:
     """Create a DataLoader for tokenized text datasets."""
 
@@ -26,4 +28,12 @@ def create_text_dataloader(
                 batch[key] = torch.tensor(values, dtype=dtype)
         return batch
 
-    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, collate_fn=collate_fn)
+    return DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        collate_fn=collate_fn,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
+        persistent_workers=num_workers > 0,
+    )

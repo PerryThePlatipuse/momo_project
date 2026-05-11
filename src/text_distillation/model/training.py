@@ -8,7 +8,7 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from text_distillation.data.dataloaders import create_text_dataloader
-from text_distillation.data.transforms import tokenize_text_dataset
+from text_distillation.data.transforms import TextColumns, tokenize_text_dataset
 from text_distillation.evaluation import compute_classification_metrics
 from text_distillation.model.loading import load_sequence_classifier, load_tokenizer
 from text_distillation.utils import ensure_dir, get_device, move_batch_to_device, set_seed
@@ -20,15 +20,20 @@ def train_text_classifier(
     model_name: str,
     output_dir: str | Path,
     text_column: str = "text",
+    text_columns: TextColumns | None = None,
     label_column: str = "label",
     num_labels: int | None = None,
     label_names: list[str] | None = None,
     max_length: int = 128,
+    metric_name: str | None = None,
     num_train_epochs: float = 3.0,
     learning_rate: float = 2e-5,
     weight_decay: float = 0.01,
     train_batch_size: int = 16,
     eval_batch_size: int = 32,
+    gradient_accumulation_steps: int = 1,
+    mixed_precision: str = "auto",
+    dataloader_num_workers: int = 0,
     seed: int = 42,
     save_model: bool = True,
     device: str | None = None,
@@ -47,6 +52,12 @@ def train_text_classifier(
     set_seed(seed)
     output_dir = ensure_dir(output_dir)
     device = device or get_device()
+    if gradient_accumulation_steps < 1:
+        raise ValueError("gradient_accumulation_steps must be >= 1.")
+    if mixed_precision not in {"auto", "fp16", "no"}:
+        raise ValueError("mixed_precision must be one of: auto, fp16, no.")
+    use_amp = mixed_precision == "fp16" or (mixed_precision == "auto" and device == "cuda")
+    pin_memory = device == "cuda"
 
     if num_labels is None:
         num_labels = len(set(train_dataset[label_column]))
@@ -62,6 +73,7 @@ def train_text_classifier(
         train_dataset,
         tokenizer=tokenizer,
         text_column=text_column,
+        text_columns=text_columns,
         label_column=label_column,
         max_length=max_length,
     )
@@ -69,6 +81,7 @@ def train_text_classifier(
         eval_dataset,
         tokenizer=tokenizer,
         text_column=text_column,
+        text_columns=text_columns,
         label_column=label_column,
         max_length=max_length,
     )
@@ -80,12 +93,16 @@ def train_text_classifier(
         tokenizer=tokenizer,
         batch_size=train_batch_size,
         shuffle=True,
+        num_workers=dataloader_num_workers,
+        pin_memory=pin_memory,
     )
     eval_loader = create_text_dataloader(
         tokenized_eval,
         tokenizer=tokenizer,
         batch_size=eval_batch_size,
         shuffle=False,
+        num_workers=dataloader_num_workers,
+        pin_memory=pin_memory,
     )
 
     model.to(device)
@@ -95,31 +112,46 @@ def train_text_classifier(
     if num_epochs != num_train_epochs:
         raise ValueError("num_train_epochs must be an integer value for the simple training loop.")
 
-    total_steps = max(1, len(train_loader) * num_epochs)
+    updates_per_epoch = int(np.ceil(len(train_loader) / gradient_accumulation_steps))
+    total_steps = max(1, updates_per_epoch * num_epochs)
     scheduler = get_linear_schedule_with_warmup(
         optimizer,
         num_warmup_steps=0,
         num_training_steps=total_steps,
     )
 
+    scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
     running_losses: list[float] = []
     model.train()
     for epoch in range(num_epochs):
         progress = tqdm(train_loader, desc=f"Training epoch {epoch + 1}/{num_epochs}")
-        for batch in progress:
+        optimizer.zero_grad(set_to_none=True)
+        for step, batch in enumerate(progress):
             batch = move_batch_to_device(batch, device)
-            optimizer.zero_grad(set_to_none=True)
-            outputs = model(**batch)
+            with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=use_amp):
+                outputs = model(**batch)
             loss = outputs.loss
-            loss.backward()
-            optimizer.step()
-            scheduler.step()
+            scaled_loss = loss / gradient_accumulation_steps
+            scaler.scale(scaled_loss).backward()
+
+            should_update = (step + 1) % gradient_accumulation_steps == 0 or (step + 1) == len(train_loader)
+            if should_update:
+                scaler.step(optimizer)
+                scaler.update()
+                scheduler.step()
+                optimizer.zero_grad(set_to_none=True)
 
             loss_value = float(loss.detach().cpu())
             running_losses.append(loss_value)
             progress.set_postfix(loss=loss_value)
 
-    eval_metrics = _evaluate_model(model, eval_loader, device)
+    eval_metrics = _evaluate_model(
+        model,
+        eval_loader,
+        device,
+        mixed_precision=mixed_precision,
+        metric_name=metric_name,
+    )
 
     metrics = {
         "train_loss": float(np.mean(running_losses)) if running_losses else 0.0,
@@ -133,10 +165,17 @@ def train_text_classifier(
     return model, metrics
 
 
-def _evaluate_model(model: Any, dataloader: Any, device: str) -> dict[str, float]:
+def _evaluate_model(
+    model: Any,
+    dataloader: Any,
+    device: str,
+    mixed_precision: str = "auto",
+    metric_name: str | None = None,
+) -> dict[str, float]:
     import torch
 
     model.eval()
+    use_amp = mixed_precision == "fp16" or (mixed_precision == "auto" and device == "cuda")
     predictions: list[int] = []
     labels: list[int] = []
 
@@ -144,13 +183,14 @@ def _evaluate_model(model: Any, dataloader: Any, device: str) -> dict[str, float
         for batch in tqdm(dataloader, desc="Evaluating"):
             batch = move_batch_to_device(batch, device)
             batch_labels = batch["labels"]
-            outputs = model(**batch)
+            with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=use_amp):
+                outputs = model(**batch)
             batch_predictions = outputs.logits.argmax(dim=-1)
             predictions.extend(batch_predictions.detach().cpu().tolist())
             labels.extend(batch_labels.detach().cpu().tolist())
 
     model.train()
-    return compute_classification_metrics(labels, predictions)
+    return compute_classification_metrics(labels, predictions, metric_name=metric_name)
 
 
 def _to_float(value: Any) -> Any:

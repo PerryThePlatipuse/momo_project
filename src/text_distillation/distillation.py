@@ -10,6 +10,7 @@ from sklearn.metrics import pairwise_distances
 from tqdm.auto import tqdm
 
 from text_distillation.data.dataloaders import create_text_dataloader
+from text_distillation.data.transforms import TextColumns, join_text_columns, normalize_text_columns
 from text_distillation.utils import get_device, move_batch_to_device, set_seed
 
 
@@ -47,13 +48,15 @@ def select_stratified_random(
 def select_kcenter_tfidf(
     dataset: Any,
     text_column: str = "text",
+    text_columns: TextColumns | None = None,
     label_column: str = "label",
     k_per_class: int = 10,
     seed: int = 42,
     max_features: int = 50_000,
 ):
     """Select k-center examples per class using TF-IDF vectors."""
-    texts = list(dataset[text_column])
+    columns = normalize_text_columns(text_column=text_column, text_columns=text_columns)
+    texts = join_text_columns(dataset, columns)
     vectorizer = TfidfVectorizer(max_features=max_features, stop_words="english")
     features = vectorizer.fit_transform(texts)
 
@@ -73,6 +76,7 @@ def select_kcenter_tfidf(
 def select_kcenter_embeddings(
     dataset: Any,
     text_column: str = "text",
+    text_columns: TextColumns | None = None,
     label_column: str = "label",
     k_per_class: int = 10,
     model_name: str = "bert-base-uncased",
@@ -86,6 +90,7 @@ def select_kcenter_embeddings(
     embeddings = compute_cls_embeddings(
         dataset=dataset,
         text_column=text_column,
+        text_columns=text_columns,
         model_name=model_name,
         batch_size=batch_size,
         max_length=max_length,
@@ -109,6 +114,7 @@ def select_kcenter_embeddings(
 def compute_cls_embeddings(
     dataset: Any,
     text_column: str = "text",
+    text_columns: TextColumns | None = None,
     model_name: str = "bert-base-uncased",
     batch_size: int = 64,
     max_length: int = 128,
@@ -126,10 +132,27 @@ def compute_cls_embeddings(
     model = AutoModel.from_pretrained(model_name)
     model.to(device)
     model.eval()
+    columns = normalize_text_columns(text_column=text_column, text_columns=text_columns)
 
     def tokenize_batch(batch):
+        if len(columns) == 1:
+            return tokenizer(
+                batch[columns[0]],
+                truncation=True,
+                max_length=max_length,
+                padding="max_length",
+            )
+        if len(columns) == 2:
+            return tokenizer(
+                batch[columns[0]],
+                batch[columns[1]],
+                truncation=True,
+                max_length=max_length,
+                padding="max_length",
+            )
+        texts = join_text_columns(batch, columns)
         return tokenizer(
-            batch[text_column],
+            texts,
             truncation=True,
             max_length=max_length,
             padding="max_length",

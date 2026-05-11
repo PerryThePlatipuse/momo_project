@@ -53,3 +53,32 @@ def test_select_kcenter_tfidf_balances_classes():
     assert len(subset) == 3
     assert sorted(subset["label"]) == [0, 1, 2]
 
+
+def test_select_kcenter_tfidf_supports_sentence_pairs():
+    dataset = Dataset.from_dict(
+        {
+            "question1": [
+                "How do I learn Python?",
+                "How can I study Python?",
+                "What is the capital of France?",
+                "Where is Paris located?",
+            ],
+            "question2": [
+                "What is a good Python tutorial?",
+                "Best way to learn programming?",
+                "Which city is France capital?",
+                "How to bake bread?",
+            ],
+            "label": [1, 1, 1, 0],
+        }
+    )
+
+    subset = select_kcenter_tfidf(
+        dataset,
+        text_columns=("question1", "question2"),
+        k_per_class=1,
+        seed=7,
+    )
+
+    assert len(subset) == 2
+    assert sorted(subset["label"]) == [0, 1]
