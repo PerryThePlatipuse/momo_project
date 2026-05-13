@@ -5,12 +5,17 @@ import pytest
 from text_distillation.data import load_ag_news, make_tiny_subset
 from text_distillation.data.datasets import get_label_names
 from text_distillation.distillation import (
+    select_herding,
     select_kcenter_embeddings,
     select_kcenter_tfidf,
     select_random,
     select_stratified_random,
 )
-from text_distillation.model import train_text_classifier
+from text_distillation.model import (
+    load_sequence_classifier,
+    load_tokenizer,
+    train_text_classifier,
+)
 
 
 pytestmark = pytest.mark.integration
@@ -30,7 +35,14 @@ def _assert_training_metrics(metrics: dict[str, float]) -> None:
     assert 0.0 <= metrics["f1_macro"] <= 1.0
 
 
-def test_all_baselines_train_on_100_examples(tmp_path):
+@pytest.mark.parametrize(
+    "model_name",
+    [
+        "hf-internal-testing/tiny-random-bert",
+        "hf-internal-testing/tiny-random-roberta",
+    ],
+)
+def test_all_baselines_train_on_100_examples(tmp_path, model_name):
     _require_training_smoke_enabled()
 
     dataset = load_ag_news()
@@ -39,7 +51,6 @@ def test_all_baselines_train_on_100_examples(tmp_path):
     eval_dataset = make_tiny_subset(dataset["test"], n_per_class=5, seed=44)
     label_names = get_label_names(dataset["train"])
 
-    model_name = "hf-internal-testing/tiny-random-bert"
     k_per_class = 25
     k_total = k_per_class * len(label_names)
 
@@ -65,18 +76,32 @@ def test_all_baselines_train_on_100_examples(tmp_path):
             max_length=32,
             seed=48,
         ),
+        "herding": select_herding(
+            train_pool,
+            k_per_class=k_per_class,
+            model_name=model_name,
+            batch_size=16,
+            max_length=32,
+            seed=49,
+        ),
     }
 
     for baseline_name, train_dataset in baseline_train_sets.items():
         assert len(train_dataset) == 100
 
-        _, metrics = train_text_classifier(
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            model_name=model_name,
-            output_dir=tmp_path / baseline_name,
+        tokenizer = load_tokenizer(model_name)
+        model = load_sequence_classifier(
+            model_name,
             num_labels=len(label_names),
             label_names=label_names,
+        )
+
+        _, metrics = train_text_classifier(
+            model=model,
+            tokenizer=tokenizer,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
+            output_dir=tmp_path / baseline_name,
             max_length=32,
             num_train_epochs=1.0,
             train_batch_size=16,

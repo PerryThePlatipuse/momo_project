@@ -109,3 +109,59 @@ distilled_dataset = select_kcenter_embeddings(
 - Keep tests focused on deterministic sampling, metrics, saving, and pure functions.
 - Store heavy outputs under `data/` or `artifacts/`, not in source modules.
 
+## How to add a new baseline
+
+The selection methods, models, and the experiment runner are wired together
+through registries so adding a new baseline is a single-file change:
+
+1. Implement your selection function in `src/text_distillation/distillation.py`
+   (or a new module that gets imported there). Decorate it:
+
+   ```python
+   from text_distillation.distillation import register_selection
+
+   @register_selection("herding")
+   def select_herding(dataset, *, k_per_class, seed=42, label_column="label", ...):
+       ...
+       return dataset.select(indices)
+   ```
+
+   Contract: first positional argument is `dataset`, `seed` is keyword,
+   the function returns a `datasets.Dataset` subset.
+
+2. Either add a new section to `notebooks/baselines.ipynb` following the
+   same five-step pattern (data → selection → model → train → save), or
+   copy `notebooks/templates/baseline_template.ipynb` for a stand-alone
+   notebook. Replace the `select_*` call with your own function.
+
+   Parameters in CAPS_LOCK are the ones that define your experiment
+   (`EXPERIMENT_PREFIX`, `K_PER_CLASS`, `DATASET_NAMES`, `MODEL_NAMES`,
+   `SEED`). Training hyperparameters default to project-wide T4 settings in
+   `train_text_classifier`; override them inline when needed:
+
+   ```python
+   _, metrics = train_text_classifier(
+       model=model,
+       tokenizer=tokenizer,
+       train_dataset=train_dataset,
+       eval_dataset=data.eval_dataset,
+       output_dir=run_dir,
+       text_columns=data.dataset_info.text_columns,
+       metric_name=data.dataset_info.metric_name,
+       seed=SEED,
+       train_batch_size=32,   # only when needed
+   )
+   ```
+
+3. Add a unit test in `tests/test_selection_registry.py` (or a method-specific
+   file) confirming registration and deterministic sampling on a toy dataset.
+
+To add a new model, register a profile in
+`src/text_distillation/model/registry.py` — at minimum pick the correct
+`embedding_pooling` (`"first_token"` for BERT/RoBERTa/ALBERT/DeBERTa,
+`"last_token"` for XLNet, or `"mean"`). Existing notebooks pick the new model
+up by adding the HF id to `MODEL_NAMES`.
+
+To analyze results, use `text_distillation.analysis.collect_runs()` to load
+all `artifacts/runs/*/{config,metrics}.json` into a pandas DataFrame.
+

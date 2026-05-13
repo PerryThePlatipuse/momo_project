@@ -1,6 +1,8 @@
+import numpy as np
 from datasets import Dataset
 
 from text_distillation.distillation import (
+    _greedy_herding,
     select_kcenter_tfidf,
     select_random,
     select_stratified_random,
@@ -52,6 +54,31 @@ def test_select_kcenter_tfidf_balances_classes():
 
     assert len(subset) == 3
     assert sorted(subset["label"]) == [0, 1, 2]
+
+
+def test_greedy_herding_picks_close_to_class_mean():
+    rng = np.random.default_rng(0)
+    # 100 points around the origin plus one outlier far away. Class mean is
+    # close to the origin, so herding must avoid the outlier when k is small.
+    cluster = rng.normal(scale=0.1, size=(100, 4))
+    features = np.vstack([cluster, np.array([[10.0, 10.0, 10.0, 10.0]])])
+
+    selected = _greedy_herding(features, k=5)
+    assert 100 not in selected, "herding picked the obvious outlier"
+    assert len(selected) == len(set(selected)) == 5
+
+
+def test_greedy_herding_is_deterministic():
+    rng = np.random.default_rng(1)
+    features = rng.normal(size=(20, 6))
+    first = _greedy_herding(features, k=7)
+    second = _greedy_herding(features, k=7)
+    assert first == second
+
+
+def test_greedy_herding_returns_full_set_when_k_equals_n():
+    features = np.eye(4)
+    assert _greedy_herding(features, k=4) == [0, 1, 2, 3]
 
 
 def test_select_kcenter_tfidf_supports_sentence_pairs():

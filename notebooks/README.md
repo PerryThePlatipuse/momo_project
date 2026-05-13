@@ -2,23 +2,26 @@
 
 Main research interface for the project.
 
-Each notebook should define one experiment clearly. Put all experiment parameters near the top as `CAPS_LOCK` variables, then call reusable functions from `src/text_distillation`.
+The single `baselines.ipynb` notebook contains every baseline:
 
-Baseline notebooks run all supported datasets sequentially by default:
+1. **01 Full-Data Baseline** — upper bound, train on the entire pool.
+2. **02 Random Coreset** — uniform random sample, no class balancing.
+3. **03 Stratified Random Coreset** — `K_PER_CLASS` per class.
+4. **04 K-Center over TF-IDF** — lexical-space coverage.
+5. **05 K-Center over Encoder Embeddings** — semantic-space coverage. Pooling is auto-selected per model (XLNet → last token).
+6. **06 Herding** — Welling 2009 over encoder embeddings.
 
-```python
-DATASET_NAMES = ["ag_news", "sst2", "qqp", "mnli-m"]
-```
+Each section reuses the same pipeline:
 
-The notebook uses the correct text columns, label column, eval split, and metric through `get_dataset_info(...)`.
+1. **Data** — `load_baseline_data(dataset_name, seed=SEED)`
+2. **Selection** — `select_*(data.train_pool, k_per_class=..., seed=SEED)` (this is what changes between sections)
+3. **Model** — `load_tokenizer(model_name)` + `load_sequence_classifier(model_name, num_labels=..., label_names=...)`
+4. **Training** — `train_text_classifier(model=..., tokenizer=..., train_dataset=..., eval_dataset=..., ...)`
+5. **Save** — `save_baseline_run(run_dir, data=..., method_name=..., model_name=..., ...)`
 
-Important notebooks:
+Steps 3–5 are wrapped in a small `run_all_models(...)` helper defined at the top of the notebook — visible inline, not hidden in `src/`. Selection runs once per dataset; training runs once per (dataset, model) pair.
 
-- `00_check_setup.ipynb`: environment and import smoke check.
-- `01_full_data_baseline.ipynb`: train on the full AG News train split.
-- `02_random_coreset_baseline.ipynb`: sample `K_TOTAL` examples without class balancing.
-- `03_stratified_random_baseline.ipynb`: sample `K_PER_CLASS` examples per class.
-- `04_kcenter_tfidf_baseline.ipynb`: select examples with k-center over TF-IDF features.
-- `05_kcenter_embedding_baseline.ipynb`: select examples with k-center over BERT `[CLS]` embeddings.
+Other notebooks:
 
-Notebook outputs are useful during exploration but should usually be cleared before committing.
+- `00_check_setup.ipynb` — environment and import smoke check.
+- `templates/baseline_template.ipynb` — starting point for a stand-alone baseline notebook; see [AGENTS.md](../AGENTS.md) section "How to add a new baseline".
