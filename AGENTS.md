@@ -33,14 +33,6 @@ Expected final output:
 - `notebooks/scaling_laws.ipynb` - herding scaling-law experiments.
 - `results/` - generated metrics, summaries, plots, and MLflow runs.
 
-## What To Do Next
-
-1. Keep `scaling_laws.ipynb` runnable for herding across datasets/models.
-2. Add or verify `AG News` support end to end.
-3. Add full-data baseline for comparison.
-4. Add aggregate CSV/plots for scaling-law results.
-5. Extend experiments without duplicating notebook logic.
-
 ## Coding Rules
 
 Write clean, readable code. Prefer small functions with clear names. Do not add abstraction unless it removes real duplication or makes future experiments easier.

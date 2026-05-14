@@ -35,15 +35,6 @@ Final deliverables:
 - `notebooks/scaling_laws.ipynb` - herding scaling-law runs.
 - `results/` - generated outputs.
 
-## Near-Term Work
-
-1. Run and validate herding scaling laws.
-2. Ensure `AG News` works end to end.
-3. Add full-data baseline.
-4. Aggregate summaries into CSV tables.
-5. Plot metric vs `K = DPC * num_labels`.
-6. Keep code ready for adding new methods, datasets, and models.
-
 ## Engineering Style
 
 Keep code beautiful, simple, and readable. Avoid clever abstractions and unnecessary complexity.
