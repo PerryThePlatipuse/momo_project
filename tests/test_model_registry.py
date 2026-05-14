@@ -40,6 +40,14 @@ def test_bert_large_has_smaller_recommended_batches():
     assert large.recommended_embedding_batch_size < base.recommended_embedding_batch_size
 
 
+def test_deberta_v3_marked_unsafe_for_fp16():
+    # DeBERTa v3 leaves some tensors in fp16 after from_pretrained, which
+    # breaks torch.amp.GradScaler. The profile must flag this so callers
+    # can opt out of mixed precision.
+    assert get_model_profile("microsoft/deberta-v3-base").supports_fp16 is False
+    assert get_model_profile("bert-base-uncased").supports_fp16 is True
+
+
 def test_unknown_model_returns_bert_like_default():
     profile = get_model_profile("some-unregistered/model")
     assert profile.embedding_pooling == "first_token"

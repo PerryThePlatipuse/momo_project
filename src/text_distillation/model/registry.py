@@ -55,6 +55,7 @@ _DEFAULT_PROFILES: list[ModelProfile] = [
         model_name="microsoft/deberta-v3-base",
         family="deberta-v3",
         embedding_pooling="first_token",
+        supports_fp16=False,
     ),
     ModelProfile(
         model_name="xlnet-base-cased",

@@ -59,6 +59,12 @@ def train_text_classifier(
     output_dir = ensure_dir(output_dir)
     device = device or get_device()
     use_amp = mixed_precision == "fp16" or (mixed_precision == "auto" and device == "cuda")
+    # DeBERTa v3 (config.model_type == "deberta-v2") leaves some tensors in fp16
+    # after from_pretrained, which makes torch.amp.GradScaler.unscale_ raise
+    # "Attempting to unscale FP16 gradients." Disable AMP automatically.
+    if use_amp and mixed_precision == "auto" and getattr(model.config, "model_type", None) == "deberta-v2":
+        print(f"[train_text_classifier] disabling fp16 for {model.config.model_type} (known incompatibility with GradScaler)")
+        use_amp = False
     pin_memory = device == "cuda"
 
     with tracker.measure("tokenization_sec"):
@@ -107,9 +113,12 @@ def train_text_classifier(
 
     updates_per_epoch = int(np.ceil(len(train_loader) / gradient_accumulation_steps))
     total_steps = max(1, updates_per_epoch * num_epochs)
+    # 10% warmup. RoBERTa-family in particular often gets stuck predicting the
+    # majority class without it, especially on small distilled subsets.
+    num_warmup_steps = max(1, total_steps // 10)
     scheduler = get_linear_schedule_with_warmup(
         optimizer,
-        num_warmup_steps=0,
+        num_warmup_steps=num_warmup_steps,
         num_training_steps=total_steps,
     )
 

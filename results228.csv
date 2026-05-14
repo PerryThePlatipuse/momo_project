@@ -1,0 +1,13 @@
+method,model,K,compression_ratio,accuracy,f1_macro,sel_sec,train_sec
+full_data,bert-base-uncased,67349,1.0,0.923,0.923,,384.7
+full_data,roberta-base,67349,1.0,0.942,0.941,,390.2
+random,bert-base-uncased,200,336.7,0.542,0.421,0.0,1.6
+random,roberta-base,200,336.7,0.509,0.337,0.0,1.6
+stratified_random,bert-base-uncased,200,336.7,0.615,0.614,1.5,1.5
+stratified_random,roberta-base,200,336.7,0.491,0.329,1.5,1.6
+kcenter_tfidf,bert-base-uncased,200,336.7,0.643,0.638,4.4,1.5
+kcenter_tfidf,roberta-base,200,336.7,0.491,0.329,4.4,1.6
+kcenter_cls,bert-base-uncased,200,336.7,0.616,0.613,10.7,1.6
+kcenter_cls,roberta-base,200,336.7,0.491,0.329,10.7,1.6
+herding,bert-base-uncased,200,336.7,0.493,0.336,0.3,1.6
+herding,roberta-base,200,336.7,0.491,0.329,0.3,1.6
