@@ -40,4 +40,21 @@ DATASET_ATTRS = {
         "metric_key": "combined_score",
         "label_dict": {0: "unequal", 1: "equal"},
     },
+    "ag_news": {
+        "load_args": ("ag_news",),
+        "sentence_keys": ("text",),
+        "label_key": "label",
+        "problem_type": "single_label_classification",
+        "test_split_key": "test",
+        "num_labels": 4,
+        "metric_args": ("accuracy",),
+        "max_length": 512,
+        "metric_key": "accuracy",
+        "label_dict": {
+            0: "World",
+            1: "Sports",
+            2: "Business",
+            3: "Sci/Tech",
+        },
+    },
 }

@@ -53,6 +53,22 @@ MODEL_ATTRS = {
         ],
         "classifier_module_names": ["classifier"],
     },
+    "microsoft/deberta-v3-base": {
+        "dropout_keys": [
+            "attention_probs_dropout_prob",
+            "hidden_dropout_prob",
+            "classifier_dropout",
+        ],
+        "classifier_module_names": ["classifier"],
+    },
+    "albert-base-v2": {
+        "dropout_keys": [
+            "attention_probs_dropout_prob",
+            "hidden_dropout_prob",
+            "classifier_dropout_prob",
+        ],
+        "classifier_module_names": ["classifier"],
+    },
     "xlnet-base-cased": {
         "dropout_keys": [
             "dropout",
