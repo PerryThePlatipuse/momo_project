@@ -125,36 +125,65 @@ class DataModule:
         logger.info("Preprocess dataset")
         # sentence keys for task
         sentence_keys = self.dataset_attr["sentence_keys"]
+        generator_tokenizer = self.generator.tokenizer
+        learner_tokenizer = self.learner.tokenizer
+        bos_tokens_map = self.generator.bos_tokens_map
+        sep_token = self.generator.sep_token
+        num_proc = self.config.num_proc if self.config.num_proc > 1 else None
+
+        def map_dataset(
+            dataset: Dataset | DatasetDict,
+            function,
+            *,
+            batched: bool,
+            desc: str,
+        ) -> Dataset | DatasetDict:
+            kwargs = {"batched": batched, "desc": desc}
+            if num_proc is not None:
+                kwargs["num_proc"] = num_proc
+            try:
+                return dataset.map(function, **kwargs)
+            except RuntimeError as exc:
+                if num_proc is None or "subprocess" not in str(exc):
+                    raise
+                logger.warning(
+                    "Dataset.map failed with num_proc=%s; retrying in one process. "
+                    "Original error: %s",
+                    num_proc,
+                    exc,
+                )
+                kwargs.pop("num_proc", None)
+                return dataset.map(function, **kwargs)
 
         # get tokenize function
         def tokenize_fn(batch: dict[str, Any]) -> dict[str, Any]:
             # bos_tokens
             if -1 in batch["labels"]:
-                bos_tokens = [self.generator.tokenizer.bos_token] * len(batch["labels"])
+                bos_tokens = [generator_tokenizer.bos_token] * len(batch["labels"])
             else:
-                bos_tokens = [self.generator.bos_tokens_map[i] for i in batch["labels"]]
+                bos_tokens = [bos_tokens_map[i] for i in batch["labels"]]
 
             # sentences
             batch_sentences = [[s.strip() for s in batch[key]] for key in sentence_keys]
             concat_sentences = [
-                f" {self.generator.sep_token} ".join(sents)
+                f" {sep_token} ".join(sents)
                 for sents in zip(*batch_sentences)
             ]
             batch_sentences_generator = [
-                f"{bos_token} {sent} {self.generator.tokenizer.eos_token}"
+                f"{bos_token} {sent} {generator_tokenizer.eos_token}"
                 for bos_token, sent in zip(bos_tokens, concat_sentences)
             ]
 
             # tokenize
-            batch_generator = self.generator.tokenizer(
+            batch_generator = generator_tokenizer(
                 batch_sentences_generator,
-                max_length=self.generator.tokenizer.model_max_length,
+                max_length=generator_tokenizer.model_max_length,
                 truncation=True,
             )
 
-            batch_learner = self.learner.tokenizer(
+            batch_learner = learner_tokenizer(
                 *batch_sentences,
-                max_length=self.learner.tokenizer.model_max_length,
+                max_length=learner_tokenizer.model_max_length,
                 truncation=True,
             )
             batch_learner["labels"] = batch["labels"]
@@ -166,10 +195,10 @@ class DataModule:
             return batch_generator | batch_learner
 
         # tokenize
-        dataset = dataset.map(
+        dataset = map_dataset(
+            dataset,
             tokenize_fn,
             batched=True,
-            num_proc=self.config.num_proc,
             desc="Tokenize datasets",
         )
 
@@ -185,10 +214,10 @@ class DataModule:
             }
 
         # format meta key for generator and learner
-        dataset = dataset.map(
+        dataset = map_dataset(
+            dataset,
             format_keys,
             batched=False,
-            num_proc=self.config.num_proc,
             desc="Set meta_keys of datasets",
         )
 
