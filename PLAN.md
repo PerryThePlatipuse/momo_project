@@ -118,6 +118,12 @@
   - `tdd.py::distill_tdd_embed`/`distill_tdd_text` — stub'ы. TDD (Maekawa 2023) не входит в `DiLM-main/`, имеется отдельный repo `arumaekawa/dataset-distillation-with-attention-labels`. В docstring — recommended integration path.
 - Notebook `baselines.ipynb` расширен секциями **07 Vanilla LM** и **08 DiLM**. Обе работают только на `{sst2, qqp, mnli-m}` (DiLM paper scope) и пропускаются для `ag_news`. Тесты: `test_dilm_loader.py` (fake data на disk), регистрация в `test_selection_registry.py`.
 - Paper-faithful evaluator config (2026-05-14): `train_text_classifier` теперь принимает `max_steps`, `scheduler_type`, `warmup_ratio`, `max_grad_norm`, поддерживает `mixed_precision="bf16"`. Добавлены `_train_for_steps` (fixed-step loop с cycling dataloader) и `_resolve_amp_dtype` (auto/fp16/bf16/no). В notebook задаётся `PAPER_EVAL` dict с гиперпараметрами строго из `DiLM-main/configs/test/coreset.yaml` и `dc.yaml` (`lr=1e-4, weight_decay=0.01, warmup_ratio=0.5, scheduler=cosine, max_steps=200, batch_size=64, bf16, max_grad_norm=1.0`). Все distillation/coreset секции notebook передают `**PAPER_EVAL` в `run_all_models`; full-data сохраняет свой default schedule. **Multi-seed averaging (`n_eval_per_dataset=5`) — всё ещё откладывается**; без него абсолютные числа остаются noisy относительно DiLM-таблицы.
+- Full DiLM pipeline (2026-05-14): loader `dilm.py` удалён, на его месте `src/text_distillation/dilm/` — самодостаточный port `DiLM-main/src/`:
+  - `generator.py` — `GeneratorModel` (class-conditional GPT-2 с per-label `<bos_y>` + `<sep>`, по образцу `DiLM-main/src/generator.py`).
+  - `lm_trainer.py::train_generator_lm` — Vanilla LM phase (causal-LM fine-tune).
+  - `dc_trainer.py::train_generator_dc` — DC phase: gradient matching через `torch.func.grad`, `classifier_grad_only=True`, softmax-weighted per-sample LM losses. Упрощения: фиксированные real-batch'и per outer step, без inner learner training, без cluster sampling / repset_teacher.
+  - `__init__.py::distill_dilm` — собирает три фазы в одну функцию, регистрируется `@register_selection("dilm")`. Никакой зависимости от `DiLM-main/` папки в runtime. Default schedule smoke-fast (`lm_train_steps=5_000, dc_train_steps=2_000`); paper-faithful — `80_000 / 20_000`.
+- Notebook scope reduced (2026-05-14): `DATASET_NAMES=["sst2"]`, `MODEL_NAMES=["bert-base-uncased"]` для быстрых single-seed прогонов. Чтобы расширить — поменять два списка обратно.
 
 ## Что нужно сделать дальше
 

@@ -63,7 +63,7 @@ If a simple function is enough, use a simple function.
 - `artifacts/`: experiment outputs, tables, plots, runs, usually not committed except README/placeholders.
 - `tests/`: small tests for reusable logic.
 - `DiLM-implementation/`: upstream reference implementation from the paper. Treat as reference material, not as the main project style.
-- `DiLM-main/`: vendored reference repo for **DiLM** (Maekawa 2024). Used in two ways: (1) `src/text_distillation/vanilla_lm.py` mirrors `DiLM-main/src/generator.py` + `trainer_lm.py` for the Vanilla LM baseline; (2) `src/text_distillation/dilm.py` loads `DiLM-main/DiLM-synthetic-data/<task>/dilm.dc/.../dataset/dataset_<i>.json` (pre-generated distilled subsets, DPC ∈ {5, 10, 20}).
+- `DiLM-main/`: vendored reference repo for **DiLM** (Maekawa 2024). Used as a documentation reference only — code is ported into `src/text_distillation/dilm/` so the runtime pipeline does not depend on this folder existing. `src/text_distillation/vanilla_lm.py` also mirrors `DiLM-main/src/generator.py` + `trainer_lm.py` for the Vanilla LM baseline.
 
 ## Notebook Structure
 
