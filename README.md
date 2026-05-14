@@ -82,10 +82,11 @@ RUN_TRAINING_SMOKE=1 pytest tests/test_training_pipeline_smoke.py -q
 ## Paper-Faithful DiLM
 
 For DiLM reproduction, use `text_distillation.dilm.distill_dilm_official`.
-It runs the vendored official `DiLM-main` protocol locally: 80k LM steps,
-20k DC steps, 20 generated datasets, 5 learner evaluations per dataset. It
-does not read the pregenerated `DiLM-main/DiLM-synthetic-data/` files. The
-official code is CUDA-only and is intended for V100/A100-class GPUs.
+It runs a local port of the paper protocol: 80k LM steps, 20k DC steps,
+20 generated datasets, 5 learner evaluations per dataset. It does not use
+Hydra, MLflow, the runtime code in `DiLM-main/`, or the pregenerated
+`DiLM-main/DiLM-synthetic-data/` files. The paper-faithful path is CUDA-only
+and is intended for V100/A100-class GPUs.
 
 ## Project Layout
 
