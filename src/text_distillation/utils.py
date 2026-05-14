@@ -76,7 +76,7 @@ def get_git_commit_hash(cwd: str | Path = ".") -> str | None:
     return result.stdout.strip()
 
 
-def get_device(prefer_mps: bool = False) -> str:
+def get_device(prefer_mps: bool = True) -> str:
     """Return the best available torch device string: cuda, mps, or cpu."""
     try:
         import torch
@@ -86,7 +86,9 @@ def get_device(prefer_mps: bool = False) -> str:
     if torch.cuda.is_available():
         return "cuda"
     if prefer_mps and getattr(torch.backends, "mps", None) is not None:
-        if torch.backends.mps.is_available():
+        mps = torch.backends.mps
+        is_built = getattr(mps, "is_built", lambda: True)
+        if is_built() and mps.is_available():
             return "mps"
     return "cpu"
 

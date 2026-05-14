@@ -22,3 +22,19 @@ def test_create_text_dataloader_stacks_tokenized_features():
     assert batch["attention_mask"].dtype == torch.int64
     assert batch["labels"].tolist() == [0, 1]
 
+
+def test_create_text_dataloader_supports_worker_processes():
+    dataset = Dataset.from_dict(
+        {
+            "input_ids": [[101, 10, 102, 0], [101, 20, 30, 102]],
+            "attention_mask": [[1, 1, 1, 0], [1, 1, 1, 1]],
+            "labels": [0, 1],
+        }
+    )
+    dataset.set_format(type="torch")
+
+    dataloader = create_text_dataloader(dataset, batch_size=2, shuffle=False, num_workers=1)
+    batch = next(iter(dataloader))
+
+    assert batch["input_ids"].shape == (2, 4)
+    assert batch["labels"].tolist() == [0, 1]

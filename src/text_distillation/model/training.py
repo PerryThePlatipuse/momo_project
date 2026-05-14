@@ -89,8 +89,9 @@ def train_text_classifier(
             label_column=label_column,
             max_length=max_length,
         )
-        tokenized_train.set_format(type="torch")
-        tokenized_eval.set_format(type="torch")
+        model_input_columns = _model_input_columns(tokenized_train, tokenizer)
+        tokenized_train.set_format(type="torch", columns=model_input_columns)
+        tokenized_eval.set_format(type="torch", columns=model_input_columns)
 
     train_loader = create_text_dataloader(
         tokenized_train,
@@ -213,6 +214,11 @@ def _resolve_amp_dtype(mixed_precision: str, device: str, model: Any):
             return None
         return torch.float16
     raise ValueError(f"mixed_precision must be one of: auto, fp16, bf16, no — got {mixed_precision!r}")
+
+
+def _model_input_columns(tokenized_dataset: Any, tokenizer: Any) -> list[str]:
+    candidate_columns = [*getattr(tokenizer, "model_input_names", ()), "labels"]
+    return [column for column in candidate_columns if column in tokenized_dataset.column_names]
 
 
 def _train_for_epochs(*, model, loader, optimizer, scheduler, scaler, device, use_amp,

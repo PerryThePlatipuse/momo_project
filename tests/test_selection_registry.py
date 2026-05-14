@@ -20,7 +20,7 @@ def test_all_baselines_registered():
         "random", "stratified_random",
         "kcenter_tfidf", "kcenter_cls",
         "herding",
-        "vanilla_lm", "dilm",
+        "vanilla_lm", "dilm", "dilm_official",
     }
     assert expected.issubset(methods), f"missing: {expected - methods}"
 

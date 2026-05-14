@@ -29,11 +29,23 @@ from text_distillation.utils import get_device, set_seed
 from .dc_trainer import train_generator_dc
 from .generator import GeneratorConfig, GeneratorModel
 from .lm_trainer import train_generator_lm
+from .official import (
+    OfficialDiLMRun,
+    distill_dilm_official,
+    load_official_dilm_dataset,
+    official_dilm_paths,
+    run_official_dilm_reproduction,
+)
 
 __all__ = [
     "GeneratorConfig",
     "GeneratorModel",
+    "OfficialDiLMRun",
     "distill_dilm",
+    "distill_dilm_official",
+    "load_official_dilm_dataset",
+    "official_dilm_paths",
+    "run_official_dilm_reproduction",
     "train_generator_dc",
     "train_generator_lm",
 ]

@@ -47,7 +47,9 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-The code supports CUDA and CPU. Large experiments are expected to be much faster on CUDA.
+The code supports CUDA, Apple Silicon MPS, and CPU. Device selection prefers
+CUDA, then MPS, then CPU. Large experiments are expected to be much faster on
+CUDA; on MPS, start with smaller batch sizes than the T4 defaults below.
 
 ## T4 Defaults
 
@@ -61,6 +63,10 @@ Baseline notebooks are configured for a NVIDIA T4 16GB starting point:
 
 If a full run hits CUDA OOM, lower `TRAIN_BATCH_SIZE` to `32` first. If GPU utilization is still low and memory is available, try `TRAIN_BATCH_SIZE = 96` or `128`.
 
+For Apple Silicon MPS, start with `TRAIN_BATCH_SIZE = 16` or `32` and
+`EVAL_BATCH_SIZE = 32` or `64`. Mixed precision is CUDA-only in this project,
+so MPS runs use fp32.
+
 ## Quick Check
 
 ```bash
@@ -72,6 +78,14 @@ Optional end-to-end training smoke test:
 ```bash
 RUN_TRAINING_SMOKE=1 pytest tests/test_training_pipeline_smoke.py -q
 ```
+
+## Paper-Faithful DiLM
+
+For DiLM reproduction, use `text_distillation.dilm.distill_dilm_official`.
+It runs the vendored official `DiLM-main` protocol locally: 80k LM steps,
+20k DC steps, 20 generated datasets, 5 learner evaluations per dataset. It
+does not read the pregenerated `DiLM-main/DiLM-synthetic-data/` files. The
+official code is CUDA-only and is intended for V100/A100-class GPUs.
 
 ## Project Layout
 
