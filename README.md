@@ -9,7 +9,9 @@ The first target dataset is AG News. The first working baselines are:
 - stratified random coreset;
 - k-center coreset over TF-IDF features;
 - k-center coreset over BERT `[CLS]` embeddings;
-- herding over encoder embeddings.
+- herding over encoder embeddings;
+- Vanilla LM (class-conditional generation from a fine-tuned GPT-2);
+- DiLM (loader for the pre-generated synthetic datasets from `DiLM-main/`).
 
 The intended workflow is notebook-first: open a notebook, set experiment variables at the top, call reusable functions from `src/text_distillation`, save results under `artifacts/`.
 

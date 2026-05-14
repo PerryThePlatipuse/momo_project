@@ -10,6 +10,8 @@ The single `baselines.ipynb` notebook contains every baseline:
 4. **04 K-Center over TF-IDF** — lexical-space coverage.
 5. **05 K-Center over Encoder Embeddings** — semantic-space coverage. Pooling is auto-selected per model (XLNet → last token).
 6. **06 Herding** — Welling 2009 over encoder embeddings.
+7. **07 Vanilla LM** — class-conditional GPT-2 generation (DiLM Table 1 baseline). Only `sst2`/`qqp`/`mnli-m` (the DiLM paper scope).
+8. **08 DiLM** — loads pre-generated synthetic data from `DiLM-main/DiLM-synthetic-data/` (DPC ∈ {5, 10, 20}, only `sst2`/`qqp`/`mnli-m`).
 
 Each section reuses the same pipeline:
 

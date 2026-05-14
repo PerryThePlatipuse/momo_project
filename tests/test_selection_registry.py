@@ -11,8 +11,18 @@ from text_distillation.distillation import (
 
 
 def test_all_baselines_registered():
+    # Importing `text_distillation` should pull in vanilla_lm / dilm side modules
+    # via the package __init__ so they register themselves.
+    import text_distillation  # noqa: F401
+
     methods = set(list_selection_methods())
-    assert {"random", "stratified_random", "kcenter_tfidf", "kcenter_cls", "herding"}.issubset(methods)
+    expected = {
+        "random", "stratified_random",
+        "kcenter_tfidf", "kcenter_cls",
+        "herding",
+        "vanilla_lm", "dilm",
+    }
+    assert expected.issubset(methods), f"missing: {expected - methods}"
 
 
 def test_get_selection_fn_returns_callable():
