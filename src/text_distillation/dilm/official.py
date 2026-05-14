@@ -64,6 +64,19 @@ class OfficialDiLMRun:
     result_dir: Path
 
 
+@dataclass(frozen=True)
+class PaperVanillaLMRun:
+    task_name: str
+    dpc: int
+    output_root: Path
+    data_root: Path
+    lm_save_dir: Path
+    lm_generator_dir: Path
+    test_save_dir: Path
+    dataset_dir: Path
+    result_dir: Path
+
+
 @dataclass
 class PaperDiLMConfig:
     dataset_name: str
@@ -124,6 +137,34 @@ def official_dilm_paths(
     )
 
 
+def paper_vanilla_lm_paths(
+    dataset_name: str,
+    *,
+    dpc: int = 20,
+    seed: int = 42,
+    output_root: str | Path = "artifacts/vanilla_lm_paper",
+    data_root: str | Path = "data/vanilla_lm_paper",
+) -> PaperVanillaLMRun:
+    task_name = _official_task_name(dataset_name)
+    output_root = Path(output_root).resolve()
+    data_root = Path(data_root).resolve()
+    train_experiment = f"train.gpt2.bert-base-uncased.{task_name}"
+    test_experiment = f"test.bert-base-uncased.{task_name}"
+    lm_save_dir = output_root / train_experiment / "dilm.lm" / f"step_80000_seed_{seed}"
+    test_save_dir = output_root / test_experiment / "dilm.lm" / f"dpc_{dpc}_seed_{seed}_paper"
+    return PaperVanillaLMRun(
+        task_name=task_name,
+        dpc=dpc,
+        output_root=output_root,
+        data_root=data_root,
+        lm_save_dir=lm_save_dir,
+        lm_generator_dir=lm_save_dir / "generator",
+        test_save_dir=test_save_dir,
+        dataset_dir=test_save_dir / "dataset",
+        result_dir=test_save_dir / "final_results",
+    )
+
+
 def run_official_dilm_reproduction(
     dataset_name: str,
     *,
@@ -157,6 +198,39 @@ def run_official_dilm_reproduction(
     return run
 
 
+def run_paper_vanilla_lm_reproduction(
+    dataset_name: str,
+    *,
+    dpc: int = 20,
+    seed: int = 42,
+    output_root: str | Path = "artifacts/vanilla_lm_paper",
+    data_root: str | Path = "data/vanilla_lm_paper",
+    n_datasets: int = PAPER_N_DATASETS,
+    force: bool = False,
+    **kwargs: Any,
+) -> PaperVanillaLMRun:
+    """Run paper Vanilla LM locally: 80k LM steps, then sample/evaluate."""
+    config = PaperDiLMConfig(
+        dataset_name=dataset_name,
+        dpc=dpc,
+        seed=seed,
+        output_root=output_root,
+        data_root=data_root,
+        n_datasets=n_datasets,
+        **{k: v for k, v in kwargs.items() if k in PaperDiLMConfig.__dataclass_fields__},
+    )
+    run = paper_vanilla_lm_paths(
+        dataset_name,
+        dpc=dpc,
+        seed=seed,
+        output_root=output_root,
+        data_root=data_root,
+    )
+    if force or not _has_generated_datasets(run.dataset_dir, n_datasets):
+        _run_local_paper_vanilla_lm(config, run)
+    return run
+
+
 def load_official_dilm_dataset(
     dataset_name: str,
     *,
@@ -176,6 +250,32 @@ def load_official_dilm_dataset(
     path = run.dataset_dir / f"dataset_{dataset_index}.json"
     if not path.exists():
         raise FileNotFoundError(f"generated DiLM dataset not found: {path}")
+    dataset = Dataset.from_json(str(path))
+    info = get_dataset_info(dataset_name)
+    if "labels" in dataset.column_names and info.label_column != "labels":
+        dataset = dataset.rename_column("labels", info.label_column)
+    return dataset
+
+
+def load_paper_vanilla_lm_dataset(
+    dataset_name: str,
+    *,
+    dpc: int = 20,
+    seed: int = 42,
+    dataset_index: int = 0,
+    output_root: str | Path = "artifacts/vanilla_lm_paper",
+    data_root: str | Path = "data/vanilla_lm_paper",
+) -> Dataset:
+    run = paper_vanilla_lm_paths(
+        dataset_name,
+        dpc=dpc,
+        seed=seed,
+        output_root=output_root,
+        data_root=data_root,
+    )
+    path = run.dataset_dir / f"dataset_{dataset_index}.json"
+    if not path.exists():
+        raise FileNotFoundError(f"generated Vanilla LM dataset not found: {path}")
     dataset = Dataset.from_json(str(path))
     info = get_dataset_info(dataset_name)
     if "labels" in dataset.column_names and info.label_column != "labels":
@@ -215,6 +315,58 @@ def distill_dilm_official(
         output_root=output_root,
         data_root=data_root,
     )
+
+
+def _run_local_paper_vanilla_lm(config: PaperDiLMConfig, run: PaperVanillaLMRun) -> None:
+    set_seed(config.seed)
+    os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+    device = _cuda_device()
+    amp_dtype, use_amp, use_fp16 = _resolve_amp(config)
+    task_name = _official_task_name(config.dataset_name)
+    max_length = TASK_MAX_LENGTH[task_name]
+
+    generator = GeneratorModel(
+        GeneratorConfig(
+            model_name=config.generator_model_name,
+            top_p=0.95,
+            top_k=None,
+            repetition_penalty=1.0,
+            generate_batch_size=512,
+            generate_max_length=max_length,
+            generate_bf16=config.bf16,
+            generate_fp16=config.fp16,
+        ),
+        num_labels=_num_labels(task_name),
+        sentence_keys=get_dataset_info(config.dataset_name).text_columns,
+    ).to(device)
+    if hasattr(generator.model, "gradient_checkpointing_enable"):
+        generator.model.gradient_checkpointing_enable()
+    learner = PaperLearnerModel(config.learner_model_name, task_name, _num_labels(task_name)).to(device)
+    data = PaperDataModule(config.dataset_name, generator, learner)
+
+    ensure_dir(run.lm_save_dir)
+    ensure_dir(run.dataset_dir)
+    ensure_dir(run.result_dir)
+    _save_json(asdict(config), run.test_save_dir / "config.json")
+
+    _train_lm_phase(generator, data, config, device, amp_dtype, use_amp, use_fp16)
+    if config.save_model:
+        generator.model.save_pretrained(run.lm_generator_dir / "last-ckpt")
+        generator.tokenizer.save_pretrained(run.lm_generator_dir / "tokenizer")
+
+    dataset_list = _generate_dataset_list(generator, data.sentence_keys, config.dpc, config.n_datasets, device, amp_dtype, use_amp)
+    for index, dataset in enumerate(dataset_list):
+        dataset.to_json(str(run.dataset_dir / f"dataset_{index}.json"))
+    results = _evaluate_dataset_list(
+        dataset_list,
+        data,
+        config,
+        device=device,
+        amp_dtype=amp_dtype,
+        use_amp=use_amp,
+    )
+    _save_json(results, run.result_dir / "results.json")
+    _save_json(_average_results(results), run.result_dir / "summary.json")
 
 
 class PaperLearnerModel(nn.Module):

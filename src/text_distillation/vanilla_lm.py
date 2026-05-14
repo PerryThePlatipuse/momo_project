@@ -26,6 +26,11 @@ import numpy as np
 from datasets import Dataset
 
 from text_distillation.data.transforms import TextColumns, normalize_text_columns
+from text_distillation.dilm.official import (
+    PAPER_N_DATASETS,
+    load_paper_vanilla_lm_dataset,
+    run_paper_vanilla_lm_reproduction,
+)
 from text_distillation.distillation import register_selection
 from text_distillation.timing import TimingTracker
 from text_distillation.utils import get_device, set_seed
@@ -37,6 +42,7 @@ SEP_TOKEN = "<sep>"
 @register_selection("vanilla_lm")
 def distill_vanilla_lm(
     dataset: Any,
+    dataset_name: str | None = None,
     text_column: str = "text",
     text_columns: TextColumns | None = None,
     label_column: str = "label",
@@ -53,12 +59,36 @@ def distill_vanilla_lm(
     max_finetune_samples: int | None = 4000,
     device: str | None = None,
     tracker: TimingTracker | None = None,
+    dataset_index: int = 0,
+    output_root: str = "artifacts/vanilla_lm_paper",
+    data_root: str = "data/vanilla_lm_paper",
+    n_datasets: int = PAPER_N_DATASETS,
+    force: bool = False,
 ) -> Any:
     """Train a class-conditional LM on `dataset` and sample `k_per_class` per class.
 
     Returns a `datasets.Dataset` whose schema matches the input (same text columns
     + `label_column`). Drop-in replacement for any `select_*` coreset function.
     """
+    if dataset_name is not None:
+        run_paper_vanilla_lm_reproduction(
+            dataset_name,
+            dpc=k_per_class,
+            seed=seed,
+            output_root=output_root,
+            data_root=data_root,
+            n_datasets=n_datasets,
+            force=force,
+        )
+        return load_paper_vanilla_lm_dataset(
+            dataset_name,
+            dpc=k_per_class,
+            seed=seed,
+            dataset_index=dataset_index,
+            output_root=output_root,
+            data_root=data_root,
+        )
+
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
     import torch

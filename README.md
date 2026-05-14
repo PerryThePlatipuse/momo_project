@@ -88,6 +88,11 @@ Hydra, MLflow, the runtime code in `DiLM-main/`, or the pregenerated
 `DiLM-main/DiLM-synthetic-data/` files. The paper-faithful path is CUDA-only
 and is intended for V100/A100-class GPUs.
 
+For the paper Vanilla LM baseline, call `distill_vanilla_lm(..., dataset_name=...)`.
+That path uses the same local LM trainer and paper schedule (GPT-2, 80k LM
+steps, 20 generated datasets, 5 learner evaluations per dataset). Omitting
+`dataset_name` keeps the older quick smoke implementation.
+
 ## Project Layout
 
 - `notebooks/`: experiment notebooks.
