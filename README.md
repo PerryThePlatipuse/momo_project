@@ -1,103 +1,111 @@
-# Text Dataset Distillation Baselines
+# DiLM: Distilling Dataset into Language Model
 
-Research-first repository for comparing text dataset distillation methods on classification tasks.
+Implementaiton of "DiLM: Distilling Dataset into Language Model for Text-level Dataset Distillation" (accepted by NAACL2024 Findings)".
 
-The first target dataset is AG News. The first working baselines are:
+**Abstract**: Dataset distillation aims to compress a training dataset by creating a small number of informative synthetic samples such that neural networks trained on them perform as well as those trained on the original training dataset. Current text dataset distillation methods create each synthetic sample as a sequence of word embeddings instead of a text to apply gradient-based optimization; however, such embedding-level distilled datasets cannot be used for training other models whose word embedding weights are different from the model used for distillation. To address this issue, we propose a novel text dataset distillation approach, called Distilling dataset into Language Model (DiLM), which trains a language model to generate informative synthetic training samples as text data, instead of directly optimizing synthetic samples. We evaluated DiLM on various text classification datasets and showed that distilled synthetic datasets from DiLM outperform those from current coreset selection methods. DiLM achieved remarkable generalization performance in training different types of models and in-context learning of large language models. Our code will be available at https://github.com/arumaekawa/DiLM.
 
-- full-data fine-tuning baseline;
-- random coreset;
-- stratified random coreset;
-- k-center coreset over TF-IDF features;
-- k-center coreset over BERT `[CLS]` embeddings;
-- herding over encoder embeddings;
-- Vanilla LM (class-conditional generation from a fine-tuned GPT-2);
-- DiLM (loader for the pre-generated synthetic datasets from `DiLM-main/`).
+**Paper**: [[arXiv](https://arxiv.org/abs/2404.00264)], [[NAACL2024 Findings](https://aclanthology.org/2023.acl-short.12/)]
 
-The intended workflow is notebook-first: open a notebook, set experiment variables at the top, call reusable functions from `src/text_distillation`, save results under `artifacts/`.
+## Contents
 
-## Supported Datasets
+This repository utilizes [PyTorch](https://pytorch.org/) and modern experiment manager tools, [Hydra](https://hydra.cc/) and [MLflow](https://www.mlflow.org/).
 
-Reusable loaders currently support:
+Datasets and pre-trained models are downloaded and used with [Hugging Face](https://huggingface.co/).
 
-| Project name | Hugging Face source | Text columns | Eval split | Paper metric |
-|---|---|---|---|---|
-| `ag_news` | `ag_news` | `text` | `test` | accuracy |
-| `sst2` | `glue`, `sst2` | `sentence` | `validation` | accuracy |
-| `qqp` | `glue`, `qqp` | `question1`, `question2` | `validation` | average of accuracy and binary F1 |
-| `mnli-m` | `glue`, `mnli` | `premise`, `hypothesis` | `validation_matched` | accuracy |
+### Directory structure
 
-Example:
-
-```python
-from text_distillation.data import get_dataset_info, get_train_eval_splits, load_text_classification_dataset
-
-DATASET_NAME = "qqp"
-info = get_dataset_info(DATASET_NAME)
-dataset = load_text_classification_dataset(DATASET_NAME)
-train_dataset, eval_dataset = get_train_eval_splits(dataset, DATASET_NAME)
+```
+.
+├── configs
+│  ├── test
+│  │  ├── coreset.yaml
+│  │  ├── dc.yaml
+│  │  └── lm.yaml
+│  └── train
+│     ├── generator
+│     │  ├── pretrained_mnli.yaml
+│     │  ├── pretrained_qqp.yaml
+│     │  └── pretrained_sst2.yaml
+│     ├── dc.yaml
+│     └── lm.yaml
+├── src
+│  ├── coreset
+│  │  ├── __init__.py
+│  │  ├── coreset_base.py
+│  │  ├── coreset_utils.py
+│  │  ├── herding.py
+│  │  ├── k_centers.py
+│  │  ├── random.py
+│  │  └── rank_dilm.py
+│  ├── distillation
+│  │  ├── __init__.py
+│  │  ├── distilled_data.py
+│  │  ├── trainer_base.py
+│  │  ├── trainer_dc.py
+│  │  └── trainer_lm.py
+│  ├── data.py
+│  ├── dataset_attrs.py
+│  ├── evaluator.py
+│  ├── generator.py
+│  ├── learner.py
+│  ├── test.py
+│  ├── train.py
+│  └── utils.py
+├── README.md
+└── requirements.txt
 ```
 
-## Setup
+## Run Scripts
 
-The project is developed against the `marketing` conda environment:
+1. Install packages (Python 3.10)
 
-```bash
-conda activate marketing
-pip install -r requirements.txt
-pip install -e .
+   ```bash
+   $ pip install -r requirements.txt
+   ```
+
+2. Run pre-training (LM)
+
+   ```bash
+    $ python src/train.py --config-name=lm data.task_name=sst2
+   ```
+
+3. Run dataset fine-tuning (Gradient Matching)
+
+   ```bash
+    $ python src/train.py --config-name=dc data.task_name=sst2 +generator=pretrained_sst2
+   ```
+
+4. Run evaluation
+
+   ```bash
+    $ python src/test.py --config-name=dc data.task_name=sst2 generator.pretrained_model_dir=path/to/pretrained_model_dir
+   ```
+
+5. Check the results with MLFlow (http://localhost:5000)
+
+   ```bash
+    $ mlflow server --backend-store-uri ./mlruns --host 0.0.0.0 --port 5000
+   ```
+
+## Citation
+
 ```
-
-The code supports CUDA, Apple Silicon MPS, and CPU. Device selection prefers
-CUDA, then MPS, then CPU. Large experiments are expected to be much faster on
-CUDA; on MPS, start with smaller batch sizes than the T4 defaults below.
-
-## T4 Defaults
-
-Baseline notebooks are configured for a NVIDIA T4 16GB starting point:
-
-- `TRAIN_BATCH_SIZE = 64`
-- `EVAL_BATCH_SIZE = 128`
-- `MIXED_PRECISION = "auto"`, which enables fp16 on CUDA
-- `DATALOADER_NUM_WORKERS = 2`
-- `GRADIENT_ACCUMULATION_STEPS = 1`
-
-If a full run hits CUDA OOM, lower `TRAIN_BATCH_SIZE` to `32` first. If GPU utilization is still low and memory is available, try `TRAIN_BATCH_SIZE = 96` or `128`.
-
-For Apple Silicon MPS, start with `TRAIN_BATCH_SIZE = 16` or `32` and
-`EVAL_BATCH_SIZE = 32` or `64`. Mixed precision is CUDA-only in this project,
-so MPS runs use fp32.
-
-## Quick Check
-
-```bash
-pytest -q
+@inproceedings{maekawa-etal-2023-dataset,
+    title = "Dataset Distillation with Attention Labels for Fine-tuning {BERT}",
+    author = "Maekawa, Aru  and
+      Kobayashi, Naoki  and
+      Funakoshi, Kotaro  and
+      Okumura, Manabu",
+    editor = "Rogers, Anna  and
+      Boyd-Graber, Jordan  and
+      Okazaki, Naoaki",
+    booktitle = "Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 2: Short Papers)",
+    month = jul,
+    year = "2023",
+    address = "Toronto, Canada",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2023.acl-short.12",
+    doi = "10.18653/v1/2023.acl-short.12",
+    pages = "119--127",
+}
 ```
-
-Optional end-to-end training smoke test:
-
-```bash
-RUN_TRAINING_SMOKE=1 pytest tests/test_training_pipeline_smoke.py -q
-```
-
-## Paper-Faithful DiLM
-
-For DiLM reproduction, use `text_distillation.dilm.distill_dilm_official`.
-It runs a local port of the paper protocol: 80k LM steps, 20k DC steps,
-20 generated datasets, 5 learner evaluations per dataset. It does not use
-Hydra, MLflow, the runtime code in `DiLM-main/`, or the pregenerated
-`DiLM-main/DiLM-synthetic-data/` files. The paper-faithful path is CUDA-only
-and is intended for V100/A100-class GPUs.
-
-For the paper Vanilla LM baseline, call `distill_vanilla_lm(..., dataset_name=...)`.
-That path uses the same local LM trainer and paper schedule (GPT-2, 80k LM
-steps, 20 generated datasets, 5 learner evaluations per dataset). Omitting
-`dataset_name` keeps the older quick smoke implementation.
-
-## Project Layout
-
-- `notebooks/`: experiment notebooks.
-- `src/text_distillation/`: reusable Python code.
-- `data/`: local datasets and distilled subsets.
-- `artifacts/`: experiment outputs.
-- `tests/`: lightweight tests for reusable logic.
-- `DiLM-implementation/`: reference implementation from the DiLM paper, kept separate from this project's simpler notebook-first code.
