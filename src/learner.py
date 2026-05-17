@@ -130,6 +130,7 @@ class LearnerModel(nn.Module):
             config.model_name,
             from_tf=bool(".ckpt" in config.model_name),
             config=self.bert_model_config,
+            attn_implementation="sdpa",
         )
 
         if self.config.use_pretrained_model:
