@@ -94,6 +94,9 @@ class CoresetModule:
         if self.config.coreset_type == "random":
             return random_selection(dataset, dpc=dpc, seed=seed)
         elif self.config.coreset_type == "k_centers":
+            cache_path = os.path.join(
+                self.save_datasets_dir, "embeddings", f"{dataset._fingerprint}.pt"
+            )
             return k_centers(
                 dataset,
                 dpc=dpc,
@@ -101,14 +104,19 @@ class CoresetModule:
                 tokenizer=self.encoder_tokenizer,
                 sentence_keys=DATASET_ATTRS[self.task_name]["sentence_keys"],
                 seed=seed,
+                cache_path=cache_path,
             )
         elif self.config.coreset_type == "herding":
+            cache_path = os.path.join(
+                self.save_datasets_dir, "embeddings", f"{dataset._fingerprint}.pt"
+            )
             return herding(
                 dataset,
                 dpc=dpc,
                 model=self.encoder,
                 tokenizer=self.encoder_tokenizer,
                 sentence_keys=DATASET_ATTRS[self.task_name]["sentence_keys"],
+                cache_path=cache_path,
             )
         elif self.config.coreset_type == "rank_dilm":
             assert self.generator is not None

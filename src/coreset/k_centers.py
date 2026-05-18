@@ -144,11 +144,12 @@ def k_centers(
     tokenizer: PreTrainedTokenizer,
     sentence_keys: list[str],
     seed: int,
+    cache_path: str | None = None,
 ) -> Dataset:
     assert len(dataset) >= dpc
 
     # compute embeddings
-    embeddings = get_embeddings(dataset, model, tokenizer, sentence_keys)
+    embeddings = get_embeddings(dataset, model, tokenizer, sentence_keys, cache_path=cache_path)
 
     # select k-centers for each label
     kmeans = FastKMeans(n_clusters=dpc, seed=seed)
