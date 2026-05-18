@@ -16,10 +16,11 @@ def herding(
     model: PreTrainedModel,
     tokenizer: PreTrainedTokenizer,
     sentence_keys: list[str],
+    cache_path: str | None = None,
 ):
     assert len(dataset) >= dpc
 
-    embeddings = get_embeddings(dataset, model, tokenizer, sentence_keys)
+    embeddings = get_embeddings(dataset, model, tokenizer, sentence_keys, cache_path=cache_path)
     embeddings = embeddings.cuda()
 
     indices = torch.arange(embeddings.size(0), device="cuda")
