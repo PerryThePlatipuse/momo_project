@@ -133,7 +133,10 @@ class LearnerModel(nn.Module):
         )
 
         if self.config.use_pretrained_model:
-            self.initial_state_dict = self.bert_model.state_dict()
+            self.initial_state_dict = {
+                name: value.detach().clone()
+                for name, value in self.bert_model.state_dict().items()
+            }
             self.classifier_module_names = MODEL_ATTRS[self.config.model_name][
                 "classifier_module_names"
             ]
