@@ -229,7 +229,7 @@ class EmbeddingDistillationTrainer:
         )
         scaler = amp.GradScaler(enabled=self.use_amp)
         evaluator = EmbeddingDistillationEvaluator(
-            task_name=learner.bert_model_config.finetuning_task,
+            task_name=getattr(learner.bert_model_config, "finetuning_task", "unknown"),
             num_labels=synthetic_data.num_labels,
             device=self.device,
             fp16=self.config.fp16,
@@ -551,7 +551,11 @@ def run_embedding_distillation(
     np.random.seed(seed)
 
     learner = LearnerModel(
-        LearnerConfig(model_name=model_name, disable_dropout=True),
+        LearnerConfig(
+            model_name=model_name,
+            disable_dropout=True,
+            attn_implementation="eager",
+        ),
         task_name=task_name,
     )
     data_root = Path(data_root)

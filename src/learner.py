@@ -97,6 +97,7 @@ class LearnerConfig:
     disable_dropout: bool = False
     gradient_checkpointing: bool = False
     freeze_bert: bool = False
+    attn_implementation: str | None = None
 
     few_shot: bool = False
 
@@ -130,6 +131,7 @@ class LearnerModel(nn.Module):
             config.model_name,
             from_tf=bool(".ckpt" in config.model_name),
             config=self.bert_model_config,
+            **self._attn_implementation_kwargs(),
         )
 
         if self.config.use_pretrained_model:
@@ -194,6 +196,11 @@ class LearnerModel(nn.Module):
 
     def get_input_embeddings(self):
         return self.bert_model.get_input_embeddings()
+
+    def _attn_implementation_kwargs(self) -> dict[str, str]:
+        if self.config.attn_implementation is None:
+            return {}
+        return {"attn_implementation": self.config.attn_implementation}
 
     def init_weights(self):
         """init_weights
