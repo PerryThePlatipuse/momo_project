@@ -6,6 +6,11 @@ import time
 import traceback
 from pathlib import Path
 
+# Ограничиваем потоки BLAS/OMP до импорта numpy — на многоядерных серверах
+# OpenBLAS падает при >128 потоках.
+for _v in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    os.environ.setdefault(_v, "32")
+
 # Оффлайн-режим: если рядом есть hf_cache/ — используем его
 _HF_CACHE = Path(__file__).resolve().parent.parent / "hf_cache"
 if _HF_CACHE.exists():

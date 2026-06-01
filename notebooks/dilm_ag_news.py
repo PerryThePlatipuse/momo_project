@@ -2,6 +2,10 @@ import os
 import sys
 from pathlib import Path
 
+# Лимит потоков BLAS/OMP до импорта numpy (OpenBLAS падает при >128 потоках).
+for _v in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    os.environ.setdefault(_v, "32")
+
 _HF_CACHE = Path(__file__).resolve().parent.parent / "hf_cache"
 if _HF_CACHE.exists():
     os.environ.setdefault("HF_HOME", str(_HF_CACHE))

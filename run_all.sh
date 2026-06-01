@@ -7,6 +7,9 @@
 #   (Ctrl+b, затем d — отключиться, обучение продолжится)
 set -u
 
+# Сервер многоядерный — OpenBLAS/OMP падают при >128 потоках. Ограничиваем.
+export OPENBLAS_NUM_THREADS=32 OMP_NUM_THREADS=32 MKL_NUM_THREADS=32 NUMEXPR_NUM_THREADS=32
+
 cd "$(dirname "$0")"
 mkdir -p results
 
