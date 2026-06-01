@@ -2,47 +2,59 @@
 # Скачивает hf_cache (разбитый на части) из GitHub-релиза hf-cache-v1,
 # склеивает и распаковывает в корень проекта.
 #
-#   bash fetch_hf_cache.sh
+#   bash fetch_hf_cache.sh              # базовый + доп. набор
+#   BASE_ONLY=1 bash fetch_hf_cache.sh  # только базовый (1.3 ГБ)
 #
 # Требует: curl, tar, python3. Токен НЕ нужен (релиз публичный).
-set -eu
+# Качает части напрямую с github.com (как git clone) — не зависит от api.github.com.
+set -u
 
 REPO="PerryThePlatipuse/momo_project"
 TAG="hf-cache-v1"
 WORK="hf_parts_dl"
+DL="https://github.com/$REPO/releases/download/$TAG"
 
 cd "$(dirname "$0")"
 mkdir -p "$WORK"
 
-echo "Получаю список частей релиза $TAG ..."
-# hfc_ = базовый набор (bert-base, roberta-base, albert, gpt2 + ag_news, sst2)
-# hfx_ = доп. модели/датасеты (bert-large, roberta-large, deberta, xlnet + mnli, qqp)
-# BASE_ONLY=1 — качать только базовый набор (для слабого интернета / к дедлайну).
-PREFIXES="('hfc_','hfx_')"
-[ "${BASE_ONLY:-0}" = "1" ] && PREFIXES="('hfc_',)" && echo "режим BASE_ONLY: только базовый набор"
-curl -fsSL "https://api.github.com/repos/$REPO/releases/tags/$TAG" -o /tmp/rel.json
-parts=$(python3 -c "import json;d=json.load(open('/tmp/rel.json'));print('\n'.join(sorted(a['name'] for a in d['assets'] if a['name'].startswith($PREFIXES))))")
-
-n=$(echo "$parts" | grep -c . || true)
-echo "Частей: $n"
-
-i=0
-for name in $parts; do
-  i=$((i+1))
-  out="$WORK/$name"
-  if [ -f "$out" ]; then echo "[$i/$n] $name уже скачан"; continue; fi
-  echo "[$i/$n] качаю $name ..."
-  # до 20 попыток на часть (на случай нестабильной сети)
-  k=0
-  until curl -fsSL --speed-limit 2000 --speed-time 30 \
-      "https://github.com/$REPO/releases/download/$TAG/$name" -o "$out"; do
-    k=$((k+1)); echo "   retry $k"; [ $k -ge 20 ] && { echo "СДАЛСЯ на $name"; exit 1; }; sleep 5
+# Скачать один URL в файл. Возвращает HTTP-код. Ретраи на сетевые/5xx; 404 = стоп.
+fetch_one() {  # $1=url  $2=out
+  local k=0 code
+  while :; do
+    code=$(curl -sL --speed-limit 2000 --speed-time 30 -o "$2" -w "%{http_code}" "$1" || echo 000)
+    case "$code" in
+      200) return 0 ;;
+      404) return 44 ;;                       # нет такого ассета — конец последовательности
+      *)   k=$((k+1)); [ $k -ge 25 ] && return 1
+           echo "   код $code, retry $k"; sleep 5 ;;
+    esac
   done
-done
+}
+
+# Перебор суффиксов split: aa, ab, ..., az, ba, ... — качаем до первого 404.
+download_prefix() {  # $1=prefix (hfc_ | hfx_)
+  local pref="$1" got=0
+  for a in {a..z}; do for b in {a..z}; do
+    local name="${pref}${a}${b}" out="$WORK/${pref}${a}${b}"
+    if [ -s "$out" ]; then got=$((got+1)); continue; fi
+    fetch_one "$DL/$name" "$out"; rc=$?
+    if [ $rc -eq 0 ]; then got=$((got+1)); echo "  $name ok ($got)";
+    elif [ $rc -eq 44 ]; then rm -f "$out"; echo "  $pref: всего $got частей"; return 0;
+    else echo "  СДАЛСЯ на $name"; return 1; fi
+  done; done
+}
+
+echo "Качаю базовый набор (hfc_) ..."
+download_prefix "hfc_" || exit 1
+
+if [ "${BASE_ONLY:-0}" != "1" ]; then
+  echo "Качаю доп. набор (hfx_) ..."
+  download_prefix "hfx_" || exit 1
+fi
 
 echo "Склеиваю и распаковываю в ./ ..."
-cat "$WORK"/hfc_* | tar -xzf -                      # базовый набор
-ls "$WORK"/hfx_* >/dev/null 2>&1 && cat "$WORK"/hfx_* | tar -xzf -   # доп. модели/датасеты
+cat "$WORK"/hfc_* | tar -xzf -                                   # базовый набор
+ls "$WORK"/hfx_* >/dev/null 2>&1 && cat "$WORK"/hfx_* | tar -xzf -   # доп. набор
 
 echo "Готово. Проверка:"
 ls hf_cache/hub/ 2>/dev/null && echo "OK: hf_cache на месте" || echo "ВНИМАНИЕ: hf_cache не найден"
