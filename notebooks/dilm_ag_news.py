@@ -82,7 +82,7 @@ evaluator = build_evaluator(TASK, **EVAL_KW)
 METRIC_KEY = evaluator.metric_key
 
 print(f"train:  {len(data_module.datasets['train']):>7}")
-print(f"test:   {len(data_module.datasets['test']):>7}")
+print(f"eval:   {len(data_module.datasets['validation']):>7}")  # DataModule зовёт eval-сплит 'validation'
 print(f"labels: {data_module.num_labels}")
 
 # ── Teacher coresets ──────────────────────────────────────────────────────────
