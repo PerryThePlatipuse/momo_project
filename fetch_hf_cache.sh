@@ -56,6 +56,10 @@ echo "Склеиваю и распаковываю в ./ ..."
 cat "$WORK"/hfc_* | tar -xzf -                                   # базовый набор
 ls "$WORK"/hfx_* >/dev/null 2>&1 && cat "$WORK"/hfx_* | tar -xzf -   # доп. набор
 
+# Удаляем битые симлинки (мёртвые tflite/onnx/lfs-указатели) — ломают копирование папки
+echo "Чищу битые симлинки ..."
+find hf_cache -type l ! -exec test -e {} \; -delete 2>/dev/null || true
+
 echo "Готово. Проверка:"
 ls hf_cache/hub/ 2>/dev/null && echo "OK: hf_cache на месте" || echo "ВНИМАНИЕ: hf_cache не найден"
 echo "Можно удалить временную папку: rm -rf $WORK"
