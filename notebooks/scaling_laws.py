@@ -50,26 +50,34 @@ sns.set_theme(style="whitegrid")
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-METHODS = ["random", "k_centers", "herding"]
+# herding уже прогнан коллегой (scaling_laws_herding_report/) — не дублируем.
+# Здесь добиваем random + k_centers в ТОЙ ЖЕ конфигурации для сопоставимости.
+METHODS = ["random", "k_centers"]
 SEED = 42
 
-TASKS = ["sst2", "ag_news"]
+TASKS = ["sst2", "mnli", "qqp", "ag_news"]
 LEARNER_MODELS = [
     "bert-base-uncased",
+    "bert-large-uncased",
     "roberta-base",
+    "roberta-large",
+    "microsoft/deberta-v3-base",
     "albert-base-v2",
+    "xlnet-base-cased",
 ]
 
-# 3 × 2 × 3 × 6 = 108 runs; embeddings кешируются на диск
-DPC_GRID = [1, 5, 10, 50, 100, 500]
+# 2 методов × 4 задачи × 7 моделей × 8 DPC × 3 повтора ≈ 1344 обучения
+# embeddings (для k_centers) кешируются на диск
+DPC_GRID = [1, 5, 10, 20, 50, 100, 500, 1000]
 N_DATASET = 1
 SKIP_EXISTING = True
 
+# точное совпадение с конфигом herding-отчёта коллеги
 EVAL_KW = dict(
     train_step=200,
-    batch_size=128,
+    batch_size=64,
     lr=1e-4,
-    n_eval_per_dataset=1,
+    n_eval_per_dataset=3,
     bf16=True,
 )
 
@@ -199,43 +207,76 @@ print("saved", csv_path)
 print("errors:", len(errors))
 
 # ── Plots ─────────────────────────────────────────────────────────────────────
+# Наш прогон даёт random + k_centers. herding берём из готового отчёта коллеги
+# (scaling_laws_herding_report/raw_results.csv) — получаем сравнение 3 методов.
+
+COLS = ["method", "task", "learner", "dpc", "k", "score"]
 
 rows = [json.loads(p.read_text()) for p in SCALING_ROOT.rglob("summary.json")]
-df = pd.DataFrame(rows)
-if df.empty:
+ours = pd.DataFrame(rows)
+if ours.empty:
     raise RuntimeError("No summaries found")
+ours["score"] = ours.apply(lambda row: row[f"{row['metric']}_mean"], axis=1)
+ours = ours[COLS]
 
-df["score"] = df.apply(lambda row: row[f"{row['metric']}_mean"], axis=1)
-df = df.sort_values(["method", "task", "learner", "dpc"])
+frames = [ours]
+herding_csv = ROOT / "scaling_laws_herding_report" / "raw_results.csv"
+if herding_csv.exists():
+    herd = pd.read_csv(herding_csv)
+    frames.append(herd[COLS])
+    print("merged herding from", herding_csv)
+else:
+    print("WARNING: herding report not found, plotting only our methods")
+
+df = pd.concat(frames, ignore_index=True).sort_values(["method", "task", "learner", "dpc"])
 df.to_csv(SCALING_ROOT / "scaling_laws_all_methods.csv", index=False)
 
 plot_df = df.copy()
 plot_df["learner_short"] = plot_df["learner"].str.split("/").str[-1]
 
-# Plot 1: сравнение методов на bert-base-uncased
+# Plot 1: сравнение 3 методов на bert-base-uncased, по задачам
 bert_df = plot_df[plot_df["learner"] == "bert-base-uncased"]
 g1 = sns.relplot(
-    data=bert_df, x="k", y="score", hue="method", col="task",
+    data=bert_df, x="k", y="score", hue="method", col="task", col_wrap=2,
     kind="line", marker="o",
     facet_kws={"sharey": False, "sharex": False}, height=4, aspect=1.2,
 )
-g1.set_axis_labels("K (примеров всего)", "Accuracy")
+g1.set(xscale="log")
+g1.set_axis_labels("K (примеров всего)", "score")
 g1.set_titles("{col_name}")
-g1.figure.suptitle("Scaling laws: сравнение методов (bert-base-uncased)", y=1.03)
+g1.figure.suptitle("Scaling laws: сравнение методов (bert-base-uncased)", y=1.02)
 plot1_path = SCALING_ROOT / "scaling_laws_methods_bert.png"
 g1.figure.savefig(plot1_path, dpi=160, bbox_inches="tight")
 print("saved", plot1_path)
 
-# Plot 2: сравнение архитектур на herding
-herding_df = plot_df[plot_df["method"] == "herding"]
+# Plot 2: сравнение методов, усреднённое по всем архитектурам, по задачам
+agg = (
+    plot_df.groupby(["method", "task", "k"], as_index=False)["score"].mean()
+)
 g2 = sns.relplot(
-    data=herding_df, x="k", y="score", hue="learner_short", col="task",
+    data=agg, x="k", y="score", hue="method", col="task", col_wrap=2,
     kind="line", marker="o",
     facet_kws={"sharey": False, "sharex": False}, height=4, aspect=1.2,
 )
-g2.set_axis_labels("K (примеров всего)", "Accuracy")
+g2.set(xscale="log")
+g2.set_axis_labels("K (примеров всего)", "score (среднее по моделям)")
 g2.set_titles("{col_name}")
-g2.figure.suptitle("Scaling laws: сравнение архитектур (herding)", y=1.03)
-plot2_path = SCALING_ROOT / "scaling_laws_models_herding.png"
+g2.figure.suptitle("Scaling laws: методы, усреднённые по архитектурам", y=1.02)
+plot2_path = SCALING_ROOT / "scaling_laws_methods_avg.png"
 g2.figure.savefig(plot2_path, dpi=160, bbox_inches="tight")
 print("saved", plot2_path)
+
+# Plot 3: сравнение архитектур для k_centers (наш метод), по задачам
+kc_df = plot_df[plot_df["method"] == "k_centers"]
+g3 = sns.relplot(
+    data=kc_df, x="k", y="score", hue="learner_short", col="task", col_wrap=2,
+    kind="line", marker="o",
+    facet_kws={"sharey": False, "sharex": False}, height=4, aspect=1.2,
+)
+g3.set(xscale="log")
+g3.set_axis_labels("K (примеров всего)", "score")
+g3.set_titles("{col_name}")
+g3.figure.suptitle("Scaling laws: сравнение архитектур (k_centers)", y=1.02)
+plot3_path = SCALING_ROOT / "scaling_laws_models_kcenters.png"
+g3.figure.savefig(plot3_path, dpi=160, bbox_inches="tight")
+print("saved", plot3_path)

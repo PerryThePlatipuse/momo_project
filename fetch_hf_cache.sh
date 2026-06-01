@@ -15,9 +15,9 @@ cd "$(dirname "$0")"
 mkdir -p "$WORK"
 
 echo "Получаю список частей релиза $TAG ..."
-# Список ассетов через публичный API
+# Список ассетов через публичный API (hfc_ = базовый набор, hfx_ = доп. модели/датасеты)
 curl -fsSL "https://api.github.com/repos/$REPO/releases/tags/$TAG" -o /tmp/rel.json
-parts=$(python3 -c "import json;d=json.load(open('/tmp/rel.json'));print('\n'.join(sorted(a['name'] for a in d['assets'] if a['name'].startswith('hfc_'))))")
+parts=$(python3 -c "import json;d=json.load(open('/tmp/rel.json'));print('\n'.join(sorted(a['name'] for a in d['assets'] if a['name'].startswith(('hfc_','hfx_')))))")
 
 n=$(echo "$parts" | grep -c . || true)
 echo "Частей: $n"
@@ -37,7 +37,8 @@ for name in $parts; do
 done
 
 echo "Склеиваю и распаковываю в ./ ..."
-cat "$WORK"/hfc_* | tar -xzf -
+cat "$WORK"/hfc_* | tar -xzf -                      # базовый набор
+ls "$WORK"/hfx_* >/dev/null 2>&1 && cat "$WORK"/hfx_* | tar -xzf -   # доп. модели/датасеты
 
 echo "Готово. Проверка:"
 ls hf_cache/hub/ 2>/dev/null && echo "OK: hf_cache на месте" || echo "ВНИМАНИЕ: hf_cache не найден"
