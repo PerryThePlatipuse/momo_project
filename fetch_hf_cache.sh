@@ -15,9 +15,13 @@ cd "$(dirname "$0")"
 mkdir -p "$WORK"
 
 echo "Получаю список частей релиза $TAG ..."
-# Список ассетов через публичный API (hfc_ = базовый набор, hfx_ = доп. модели/датасеты)
+# hfc_ = базовый набор (bert-base, roberta-base, albert, gpt2 + ag_news, sst2)
+# hfx_ = доп. модели/датасеты (bert-large, roberta-large, deberta, xlnet + mnli, qqp)
+# BASE_ONLY=1 — качать только базовый набор (для слабого интернета / к дедлайну).
+PREFIXES="('hfc_','hfx_')"
+[ "${BASE_ONLY:-0}" = "1" ] && PREFIXES="('hfc_',)" && echo "режим BASE_ONLY: только базовый набор"
 curl -fsSL "https://api.github.com/repos/$REPO/releases/tags/$TAG" -o /tmp/rel.json
-parts=$(python3 -c "import json;d=json.load(open('/tmp/rel.json'));print('\n'.join(sorted(a['name'] for a in d['assets'] if a['name'].startswith(('hfc_','hfx_')))))")
+parts=$(python3 -c "import json;d=json.load(open('/tmp/rel.json'));print('\n'.join(sorted(a['name'] for a in d['assets'] if a['name'].startswith($PREFIXES))))")
 
 n=$(echo "$parts" | grep -c . || true)
 echo "Частей: $n"

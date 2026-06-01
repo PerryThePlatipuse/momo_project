@@ -55,14 +55,16 @@ sns.set_theme(style="whitegrid")
 METHODS = ["random", "k_centers"]
 SEED = 42
 
-TASKS = ["sst2", "mnli", "qqp", "ag_news"]
+# Порядок = приоритет (базовый набор первым → осмысленный результат даже
+# при прерывании и при наличии только базового hf_cache).
+TASKS = ["ag_news", "sst2", "mnli", "qqp"]
 LEARNER_MODELS = [
     "bert-base-uncased",
-    "bert-large-uncased",
     "roberta-base",
+    "albert-base-v2",
+    "bert-large-uncased",
     "roberta-large",
     "microsoft/deberta-v3-base",
-    "albert-base-v2",
     "xlnet-base-cased",
 ]
 
@@ -80,6 +82,34 @@ EVAL_KW = dict(
     n_eval_per_dataset=3,
     bf16=True,
 )
+
+
+def _model_available(name: str) -> bool:
+    if not _HF_CACHE.exists():
+        return True  # онлайн-машина: ничего не отсекаем
+    safe = name.replace("/", "--")
+    return (_HF_CACHE / "hub" / f"models--{safe}").exists()
+
+
+def _task_available(task: str) -> bool:
+    if not _HF_CACHE.exists():
+        return True
+    if task == "ag_news":
+        return (_HF_CACHE / "datasets" / "ag_news").exists() or \
+               (_HF_CACHE / "hub" / "datasets--ag_news").exists()
+    return (_HF_CACHE / "datasets" / "glue" / task).exists()
+
+
+# Берём только то, что реально лежит в hf_cache — скрипт работает и на
+# базовом наборе (сейчас), и на полном (когда дольются доп. ассеты).
+_skip_m = [m for m in LEARNER_MODELS if not _model_available(m)]
+_skip_t = [t for t in TASKS if not _task_available(t)]
+LEARNER_MODELS = [m for m in LEARNER_MODELS if _model_available(m)]
+TASKS = [t for t in TASKS if _task_available(t)]
+if _skip_m:
+    print("SKIP (нет в hf_cache) models:", _skip_m)
+if _skip_t:
+    print("SKIP (нет в hf_cache) tasks:", _skip_t)
 
 SCALING_ROOT = RESULTS_ROOT / "scaling_laws"
 SCALING_ROOT.mkdir(parents=True, exist_ok=True)
