@@ -18,12 +18,11 @@ artifacts/tables/*
 artifacts/plots/*
 !artifacts/**/.gitkeep
 !artifacts/**/README.md
-
+!results/emdebding_distilation/
 models/
 checkpoints/
 wandb/
 
 hf_cache/
-results/
 *.tar.gz*
 *.zip*

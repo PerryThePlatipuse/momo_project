@@ -1,0 +1,6 @@
+method,status,actual_points,expected_points,coverage_ratio,tasks_present,learners_present,dpcs_present,missing_tasks,missing_learners
+herding,complete,224,224,1.000,ag_news|mnli|qqp|sst2,albert-base-v2|bert-base-uncased|bert-large-uncased|microsoft/deberta-v3-base|roberta-base|roberta-large|xlnet-base-cased,1|5|10|20|50|100|500|1000,,
+random,partial,32,224,0.143,ag_news|sst2,bert-base-uncased|roberta-base,1|5|10|20|50|100|500|1000,mnli|qqp,albert-base-v2|bert-large-uncased|microsoft/deberta-v3-base|roberta-large|xlnet-base-cased
+k_centers,partial,32,224,0.143,ag_news|sst2,bert-base-uncased|roberta-base,1|5|10|20|50|100|500|1000,mnli|qqp,albert-base-v2|bert-large-uncased|microsoft/deberta-v3-base|roberta-large|xlnet-base-cased
+dilm,missing,0,224,0.000,,,,ag_news|mnli|qqp|sst2,albert-base-v2|bert-base-uncased|bert-large-uncased|microsoft/deberta-v3-base|roberta-base|roberta-large|xlnet-base-cased
+embedding_distillation,extra_method,12,,,ag_news,bert-base-uncased,1|2|3|5|10|20,,
