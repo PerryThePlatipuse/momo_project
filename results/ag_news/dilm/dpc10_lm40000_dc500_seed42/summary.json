@@ -1,0 +1,19 @@
+{
+  "name": "dpc10_lm40000_dc500_seed42",
+  "method": "dilm",
+  "task": "ag_news",
+  "learner": "bert-base-uncased",
+  "dpc": 10,
+  "n_dataset": 2,
+  "lm_steps": 40000,
+  "dc_steps": 500,
+  "metric": "accuracy",
+  "accuracy_mean": 0.8006578947368421,
+  "accuracy_std": 0.03801254075759271,
+  "scores": [
+    0.8415789473684211,
+    0.8353947368421053,
+    0.7585526315789474,
+    0.7671052631578947
+  ]
+}

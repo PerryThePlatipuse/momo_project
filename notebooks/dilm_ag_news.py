@@ -56,19 +56,27 @@ EVAL_KW = dict(
 
 # paper: LM=80k + DC=20k (~8ч на A100)
 # checkpoint: LM=40k + DC=10k (~2.5ч на H100)
+# reduced: LM=40k (from ckpt) + DC=1k, gm_syn_dpc=16 (~2ч на A100)
 LM_STEPS = 40000
-DC_STEPS = 10000
+DC_STEPS = 500
 INNER_LOOP = 10
 MODEL_STEP_PER_INNER = 20
 GENERATE_INTERVAL = 10
-GM_SYN_DPC = 64
-GM_REAL_DPC = 100
+GM_SYN_DPC = 16
+GM_REAL_DPC = 50
 REPSET_DPC = 100
 N_REPSET = 10
 OVER_SAMPLE = 50.0
 
 RUN_NAME = f"dpc{DPC}_lm{LM_STEPS}_dc{DC_STEPS}_seed{SEED}"
 dilm_dir = RESULTS_ROOT / TASK / "dilm" / RUN_NAME
+LM_CKPT_DIR = RESULTS_ROOT / TASK / "dilm" / f"dpc{DPC}_lm{LM_STEPS}_dc10000_seed{SEED}" / "lm" / "generator"
+if not LM_CKPT_DIR.exists():
+    # fallback: any existing LM checkpoint from previous runs
+    import glob as _glob
+    _candidates = sorted(_glob.glob(str(RESULTS_ROOT / TASK / "dilm" / f"dpc{DPC}_lm{LM_STEPS}_*" / "lm" / "generator")))
+    if _candidates:
+        LM_CKPT_DIR = Path(_candidates[-1])
 
 set_seed(SEED)
 mlflow.set_tracking_uri(f"file:{RESULTS_ROOT}/mlruns")
@@ -80,7 +88,11 @@ print(f"output: {dilm_dir}")
 # ── Data & models ─────────────────────────────────────────────────────────────
 
 learner = build_learner(LEARNER_MODEL, TASK, gradient_checkpointing=True)
-generator = build_generator(TASK, gradient_checkpointing=True)
+if LM_CKPT_DIR.exists():
+    print(f"Loading generator from LM checkpoint: {LM_CKPT_DIR}")
+    generator = build_generator(TASK, pretrained_dir=LM_CKPT_DIR, gradient_checkpointing=True)
+else:
+    generator = build_generator(TASK, gradient_checkpointing=True)
 data_module = build_data_module(TASK, learner, generator, train_batch_size=128)
 evaluator = build_evaluator(TASK, **EVAL_KW)
 METRIC_KEY = evaluator.metric_key
@@ -98,25 +110,26 @@ print(f"{len(repset_teachers)} teacher-coresets, в каждом {len(repset_tea
 # ── LM pretrain ───────────────────────────────────────────────────────────────
 
 lm_dir = dilm_dir / "lm"
-trainer_lm = build_trainer_lm(
-    lm_dir,
-    total_train_step=LM_STEPS,
-    val_interval=LM_STEPS,
-    val_skip_step=LM_STEPS + 1,
-)
-
-with mlflow.start_run(run_name=f"dilm_lm.{RUN_NAME}"):
-    mlflow.log_params({"stage": "lm", "task": TASK, "steps": LM_STEPS, "seed": SEED})
-    trainer_lm.fit(
-        generator=generator,
-        learner=learner,
-        data_module=data_module,
-        evaluator=evaluator,
-        repset_teachers=None,
-        coreset_module=kc_module,
+if LM_CKPT_DIR.exists():
+    print("LM pretrain: skipped (loaded from checkpoint)")
+else:
+    trainer_lm = build_trainer_lm(
+        lm_dir,
+        total_train_step=LM_STEPS,
+        val_interval=LM_STEPS,
+        val_skip_step=LM_STEPS + 1,
     )
-
-print("LM pretrain done")
+    with mlflow.start_run(run_name=f"dilm_lm.{RUN_NAME}"):
+        mlflow.log_params({"stage": "lm", "task": TASK, "steps": LM_STEPS, "seed": SEED})
+        trainer_lm.fit(
+            generator=generator,
+            learner=learner,
+            data_module=data_module,
+            evaluator=evaluator,
+            repset_teachers=None,
+            coreset_module=kc_module,
+        )
+    print("LM pretrain done")
 
 # ── DC fine-tune ──────────────────────────────────────────────────────────────
 
