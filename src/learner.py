@@ -147,13 +147,14 @@ class LearnerModel(nn.Module):
             self.bert_model_config.pad_token_id = self.tokenizer.pad_token_id
 
         if self.config.gradient_checkpointing:
-            if self.config.model_name in ["xlnet-base-cased"]:
-                logger.warning(
-                    f"{self.config.model_name} does not support gradient checkpointing."
-                    " Disable gradient checkpointing."
-                )
-            else:
+            # Не все модели поддерживают GC (xlnet, albert, ...) — ловим и продолжаем без него.
+            try:
                 self.bert_model.gradient_checkpointing_enable()
+            except ValueError as exc:
+                logger.warning(
+                    f"{self.config.model_name}: gradient checkpointing недоступен"
+                    f" ({exc}). Продолжаю без него."
+                )
 
         if self.config.freeze_bert:
             for _, p in self.named_parameters_for_bert():
