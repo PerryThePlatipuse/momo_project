@@ -4,10 +4,10 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
-import evaluate
 import mlflow
 import numpy as np
 import torch
+from sklearn.metrics import accuracy_score, f1_score
 from datasets import Dataset
 from torch.cuda import amp
 from torch.utils.data import DataLoader
@@ -30,18 +30,26 @@ class Metric:
     """
 
     def __init__(self, task_name: str):
-        self.metric = evaluate.load(*DATASET_ATTRS[task_name]["metric_args"])
+        # Локальный расчёт (offline): без evaluate.load / обращения к HF Hub.
         self.preprocess = preprocess_for_classification
         self.metric_key = DATASET_ATTRS[task_name]["metric_key"]
+        self._preds: list[int] = []
+        self._refs: list[int] = []
 
     def add_batch(self, logits: torch.Tensor, labels: torch.Tensor):
-        return self.metric.add_batch(**self.preprocess(logits, labels))
+        d = self.preprocess(logits, labels)
+        self._preds.extend(d["predictions"])
+        self._refs.extend(d["references"])
 
     def compute(self) -> dict[str, float]:
-        results = self.metric.compute()
+        acc = float(accuracy_score(self._refs, self._preds))
+        results = {"accuracy": acc}
         if self.metric_key == "combined_score":
-            assert len(results) > 1
-            results["combined_score"] = np.mean(list(results.values())).item()
+            # GLUE qqp/mrpc: accuracy + binary F1, combined = их среднее
+            f1 = float(f1_score(self._refs, self._preds))
+            results["f1"] = f1
+            results["combined_score"] = float(np.mean([acc, f1]))
+        self._preds, self._refs = [], []  # сброс перед следующим прогоном
         return results
 
 

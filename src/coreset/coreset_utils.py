@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import torch
 from datasets import Dataset
 from torch.cuda import amp
@@ -26,8 +28,18 @@ def get_embeddings(
     tokenizer: PreTrainedTokenizer,
     sentence_keys: list[str],
     batch_size: int = 256,
+    cache_path: str | None = None,
 ) -> torch.Tensor:
-    """Compute embeddings of training examples with encoder model"""
+    """Compute embeddings of training examples with encoder model.
+
+    If cache_path is given, loads from disk on hit and saves on miss —
+    so embeddings for the same (dataset, model) are computed only once
+    across all DPC values.
+    """
+    if cache_path is not None:
+        p = Path(cache_path)
+        if p.exists():
+            return torch.load(p, weights_only=True)
 
     model.cuda()
     model.eval()
@@ -44,5 +56,11 @@ def get_embeddings(
         return {"embedding": embeddings}
 
     embed_dataset = dataset.map(_get_embedding, batched=True, batch_size=batch_size)
+    embeddings = torch.tensor(embed_dataset["embedding"])
 
-    return torch.tensor(embed_dataset["embedding"])
+    if cache_path is not None:
+        p = Path(cache_path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(embeddings, p)
+
+    return embeddings
