@@ -35,7 +35,13 @@ DATA_ROOT = ROOT / "data"
 def build_learner(model_name: str, task: str, gradient_checkpointing: bool = False) -> LearnerModel:
     # gradient_checkpointing=False by default — H100 80GB doesn't need it,
     # and recomputing attention in backward costs ~25-30% throughput.
-    cfg = LearnerConfig(model_name=model_name, gradient_checkpointing=gradient_checkpointing)
+    # eager-attention: sdpa/дефолт ломается для bert/roberta/albert/gpt2 на части
+    # версий transformers; eager работает везде (для коротких прогонов скорость некритична).
+    cfg = LearnerConfig(
+        model_name=model_name,
+        gradient_checkpointing=gradient_checkpointing,
+        attn_implementation="eager",
+    )
     return LearnerModel(cfg, task_name=task)
 
 

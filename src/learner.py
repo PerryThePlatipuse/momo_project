@@ -97,6 +97,7 @@ class LearnerConfig:
     disable_dropout: bool = False
     gradient_checkpointing: bool = False
     freeze_bert: bool = False
+    attn_implementation: str | None = None
 
     few_shot: bool = False
 
@@ -130,11 +131,15 @@ class LearnerModel(nn.Module):
             config.model_name,
             from_tf=bool(".ckpt" in config.model_name),
             config=self.bert_model_config,
-            attn_implementation="eager",
+            **self._attn_implementation_kwargs(),
         )
 
         if self.config.use_pretrained_model:
-            self.initial_state_dict = self.bert_model.state_dict()
+            self.initial_state_dict = {
+                name: value.detach().clone()
+                for name, value in self.bert_model.state_dict().items()
+            }
+            self._initial_state_dict_cache = {}
             self.classifier_module_names = MODEL_ATTRS[self.config.model_name][
                 "classifier_module_names"
             ]
@@ -194,6 +199,11 @@ class LearnerModel(nn.Module):
     def get_input_embeddings(self):
         return self.bert_model.get_input_embeddings()
 
+    def _attn_implementation_kwargs(self) -> dict[str, str]:
+        if self.config.attn_implementation is None:
+            return {}
+        return {"attn_implementation": self.config.attn_implementation}
+
     def init_weights(self):
         """init_weights
         Initialize additional weights of pretrained model in the same way
@@ -204,7 +214,7 @@ class LearnerModel(nn.Module):
             assert hasattr(self.bert_model, "init_weights")
             self.bert_model.init_weights()
         else:
-            self.bert_model.load_state_dict(self.initial_state_dict)
+            self.bert_model.load_state_dict(self._initial_state_dict_for_device())
             for module_name in self.classifier_module_names:
                 initialized_module = self.bert_model
                 for p in module_name.split("."):
@@ -218,6 +228,16 @@ class LearnerModel(nn.Module):
                             module.bias.data.zero_()
                     elif len(list(module.parameters(recurse=False))) > 0:
                         raise NotImplementedError
+
+    def _initial_state_dict_for_device(self) -> dict[str, torch.Tensor]:
+        device = self.device
+        cache_key = str(device)
+        if cache_key not in self._initial_state_dict_cache:
+            self._initial_state_dict_cache[cache_key] = {
+                name: value.to(device=device, non_blocking=True)
+                for name, value in self.initial_state_dict.items()
+            }
+        return self._initial_state_dict_cache[cache_key]
 
     def classifier_param_names(self):
         for module_name in self.classifier_module_names:
