@@ -50,7 +50,9 @@ class GeneratorModel(nn.Module):
 
         # setup model
         self.model: PreTrainedModel = AutoModelForCausalLM.from_pretrained(
-            self.config.model_name, from_tf=bool(".ckpt" in config.model_name)
+            self.config.model_name,
+            from_tf=bool(".ckpt" in config.model_name),
+            attn_implementation="eager",
         )
 
         if self.config.pretrained_model_dir is None:
