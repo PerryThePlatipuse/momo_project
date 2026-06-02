@@ -24,6 +24,5 @@ checkpoints/
 wandb/
 
 hf_cache/
-results/
 *.tar.gz*
 *.zip*
