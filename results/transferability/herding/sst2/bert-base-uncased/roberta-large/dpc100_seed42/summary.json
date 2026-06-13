@@ -1,0 +1,20 @@
+{
+  "name": "transfer.herding.sst2.bert-base-uncased->roberta-large.dpc100",
+  "method": "herding",
+  "task": "sst2",
+  "source": "bert-base-uncased",
+  "target": "roberta-large",
+  "learner": "roberta-large",
+  "dpc": 100,
+  "k": 200,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 46.29893037583679,
+  "metric": "accuracy",
+  "accuracy_mean": 0.8612385321100917,
+  "accuracy_std": 0.008027522935779796,
+  "scores": [
+    0.8692660550458715,
+    0.8532110091743119
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "transfer.herding.ag_news.bert-base-uncased->roberta-base.dpc10",
+  "method": "herding",
+  "task": "ag_news",
+  "source": "bert-base-uncased",
+  "target": "roberta-base",
+  "learner": "roberta-base",
+  "dpc": 10,
+  "k": 40,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 35.6692898129113,
+  "metric": "accuracy",
+  "accuracy_mean": 0.8396710526315789,
+  "accuracy_std": 0.005855263157894752,
+  "scores": [
+    0.8338157894736842,
+    0.8455263157894737
+  ]
+}

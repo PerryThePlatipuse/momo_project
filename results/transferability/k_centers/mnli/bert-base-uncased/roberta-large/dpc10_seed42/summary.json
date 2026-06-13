@@ -1,0 +1,20 @@
+{
+  "name": "transfer.k_centers.mnli.bert-base-uncased->roberta-large.dpc10",
+  "method": "k_centers",
+  "task": "mnli",
+  "source": "bert-base-uncased",
+  "target": "roberta-large",
+  "learner": "roberta-large",
+  "dpc": 10,
+  "k": 30,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 65.25548956799321,
+  "metric": "accuracy",
+  "accuracy_mean": 0.4352012226184412,
+  "accuracy_std": 0.004024452368823234,
+  "scores": [
+    0.4311767702496179,
+    0.4392256749872644
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "transfer.k_centers.sst2.bert-base-uncased->bert-large-uncased.dpc10",
+  "method": "k_centers",
+  "task": "sst2",
+  "source": "bert-base-uncased",
+  "target": "bert-large-uncased",
+  "learner": "bert-large-uncased",
+  "dpc": 10,
+  "k": 20,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 45.31080951797776,
+  "metric": "accuracy",
+  "accuracy_mean": 0.8698394495412844,
+  "accuracy_std": 0.0063073394495412605,
+  "scores": [
+    0.8635321100917431,
+    0.8761467889908257
+  ]
+}

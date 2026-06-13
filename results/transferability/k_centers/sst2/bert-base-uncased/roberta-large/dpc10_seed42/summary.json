@@ -1,0 +1,20 @@
+{
+  "name": "transfer.k_centers.sst2.bert-base-uncased->roberta-large.dpc10",
+  "method": "k_centers",
+  "task": "sst2",
+  "source": "bert-base-uncased",
+  "target": "roberta-large",
+  "learner": "roberta-large",
+  "dpc": 10,
+  "k": 20,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 47.14896981487982,
+  "metric": "accuracy",
+  "accuracy_mean": 0.7396788990825689,
+  "accuracy_std": 0.0493119266055046,
+  "scores": [
+    0.6903669724770642,
+    0.7889908256880734
+  ]
+}

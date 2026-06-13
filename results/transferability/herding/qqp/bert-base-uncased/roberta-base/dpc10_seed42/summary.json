@@ -1,0 +1,20 @@
+{
+  "name": "transfer.herding.qqp.bert-base-uncased->roberta-base.dpc10",
+  "method": "herding",
+  "task": "qqp",
+  "source": "bert-base-uncased",
+  "target": "roberta-base",
+  "learner": "roberta-base",
+  "dpc": 10,
+  "k": 20,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 51.350195499137044,
+  "metric": "combined_score",
+  "combined_score_mean": 0.6322000617752475,
+  "combined_score_std": 0.023278454014111605,
+  "scores": [
+    0.6554785157893591,
+    0.6089216077611359
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "transfer.random.mnli.bert-base-uncased->bert-base-uncased.dpc10",
+  "method": "random",
+  "task": "mnli",
+  "source": "bert-base-uncased",
+  "target": "bert-base-uncased",
+  "learner": "bert-base-uncased",
+  "dpc": 10,
+  "k": 30,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 35.15621822187677,
+  "metric": "accuracy",
+  "accuracy_mean": 0.36882322975038206,
+  "accuracy_std": 0.009271523178807944,
+  "scores": [
+    0.37809475292919004,
+    0.35955170657157415
+  ]
+}

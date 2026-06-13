@@ -1,0 +1,20 @@
+{
+  "name": "transfer.k_centers.qqp.bert-base-uncased->albert-base-v2.dpc10",
+  "method": "k_centers",
+  "task": "qqp",
+  "source": "bert-base-uncased",
+  "target": "albert-base-v2",
+  "learner": "albert-base-v2",
+  "dpc": 10,
+  "k": 20,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 64.58512023603544,
+  "metric": "combined_score",
+  "combined_score_mean": 0.6110704350986094,
+  "combined_score_std": 0.014845172686912267,
+  "scores": [
+    0.6259156077855217,
+    0.5962252624116972
+  ]
+}

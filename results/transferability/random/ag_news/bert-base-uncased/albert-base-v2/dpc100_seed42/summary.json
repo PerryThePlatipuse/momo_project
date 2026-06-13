@@ -1,0 +1,20 @@
+{
+  "name": "transfer.random.ag_news.bert-base-uncased->albert-base-v2.dpc100",
+  "method": "random",
+  "task": "ag_news",
+  "source": "bert-base-uncased",
+  "target": "albert-base-v2",
+  "learner": "albert-base-v2",
+  "dpc": 100,
+  "k": 400,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 50.21753353904933,
+  "metric": "accuracy",
+  "accuracy_mean": 0.8640789473684211,
+  "accuracy_std": 0.0019736842105263497,
+  "scores": [
+    0.8660526315789474,
+    0.8621052631578947
+  ]
+}

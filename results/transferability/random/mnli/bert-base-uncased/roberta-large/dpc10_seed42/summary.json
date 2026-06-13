@@ -1,0 +1,20 @@
+{
+  "name": "transfer.random.mnli.bert-base-uncased->roberta-large.dpc10",
+  "method": "random",
+  "task": "mnli",
+  "source": "bert-base-uncased",
+  "target": "roberta-large",
+  "learner": "roberta-large",
+  "dpc": 10,
+  "k": 30,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 67.41119824210182,
+  "metric": "accuracy",
+  "accuracy_mean": 0.4068772287315333,
+  "accuracy_std": 0.0011716760061130926,
+  "scores": [
+    0.40570555272542025,
+    0.40804890473764643
+  ]
+}

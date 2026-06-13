@@ -1,0 +1,20 @@
+{
+  "name": "transfer.k_centers.ag_news.bert-base-uncased->bert-large-uncased.dpc10",
+  "method": "k_centers",
+  "task": "ag_news",
+  "source": "bert-base-uncased",
+  "target": "bert-large-uncased",
+  "learner": "bert-large-uncased",
+  "dpc": 10,
+  "k": 40,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 93.72528995596804,
+  "metric": "accuracy",
+  "accuracy_mean": 0.8101973684210526,
+  "accuracy_std": 0.003092105263157896,
+  "scores": [
+    0.8071052631578948,
+    0.8132894736842106
+  ]
+}

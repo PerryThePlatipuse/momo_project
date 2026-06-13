@@ -1,0 +1,20 @@
+{
+  "name": "transfer.random.qqp.bert-base-uncased->roberta-base.dpc10",
+  "method": "random",
+  "task": "qqp",
+  "source": "bert-base-uncased",
+  "target": "roberta-base",
+  "learner": "roberta-base",
+  "dpc": 10,
+  "k": 20,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 52.44915203098208,
+  "metric": "combined_score",
+  "combined_score_mean": 0.6337209396766181,
+  "combined_score_std": 0.005905449128988716,
+  "scores": [
+    0.6278154905476294,
+    0.6396263888056068
+  ]
+}
