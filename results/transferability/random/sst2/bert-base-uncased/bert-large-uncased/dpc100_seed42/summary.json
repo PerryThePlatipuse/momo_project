@@ -1,0 +1,20 @@
+{
+  "name": "transfer.random.sst2.bert-base-uncased->bert-large-uncased.dpc100",
+  "method": "random",
+  "task": "sst2",
+  "source": "bert-base-uncased",
+  "target": "bert-large-uncased",
+  "learner": "bert-large-uncased",
+  "dpc": 100,
+  "k": 200,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 47.304836366092786,
+  "metric": "accuracy",
+  "accuracy_mean": 0.867545871559633,
+  "accuracy_std": 0.007454128440366969,
+  "scores": [
+    0.875,
+    0.8600917431192661
+  ]
+}

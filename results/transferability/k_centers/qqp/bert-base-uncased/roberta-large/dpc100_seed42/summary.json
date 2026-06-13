@@ -1,0 +1,20 @@
+{
+  "name": "transfer.k_centers.qqp.bert-base-uncased->roberta-large.dpc100",
+  "method": "k_centers",
+  "task": "qqp",
+  "source": "bert-base-uncased",
+  "target": "roberta-large",
+  "learner": "roberta-large",
+  "dpc": 100,
+  "k": 200,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 106.22162959910929,
+  "metric": "combined_score",
+  "combined_score_mean": 0.6913105754240338,
+  "combined_score_std": 0.006881047001935758,
+  "scores": [
+    0.6981916224259695,
+    0.684429528422098
+  ]
+}

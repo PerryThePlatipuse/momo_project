@@ -1,0 +1,20 @@
+{
+  "name": "transfer.herding.ag_news.bert-base-uncased->albert-base-v2.dpc10",
+  "method": "herding",
+  "task": "ag_news",
+  "source": "bert-base-uncased",
+  "target": "albert-base-v2",
+  "learner": "albert-base-v2",
+  "dpc": 10,
+  "k": 40,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 40.73539343196899,
+  "metric": "accuracy",
+  "accuracy_mean": 0.8343421052631579,
+  "accuracy_std": 0.0025000000000000022,
+  "scores": [
+    0.8318421052631579,
+    0.8368421052631579
+  ]
+}

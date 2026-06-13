@@ -1,0 +1,20 @@
+{
+  "name": "transfer.random.sst2.bert-base-uncased->albert-base-v2.dpc100",
+  "method": "random",
+  "task": "sst2",
+  "source": "bert-base-uncased",
+  "target": "albert-base-v2",
+  "learner": "albert-base-v2",
+  "dpc": 100,
+  "k": 200,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 19.895984795875847,
+  "metric": "accuracy",
+  "accuracy_mean": 0.7912844036697249,
+  "accuracy_std": 0.001146788990825709,
+  "scores": [
+    0.7901376146788991,
+    0.7924311926605505
+  ]
+}

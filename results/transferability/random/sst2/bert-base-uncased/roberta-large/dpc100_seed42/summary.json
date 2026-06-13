@@ -1,0 +1,20 @@
+{
+  "name": "transfer.random.sst2.bert-base-uncased->roberta-large.dpc100",
+  "method": "random",
+  "task": "sst2",
+  "source": "bert-base-uncased",
+  "target": "roberta-large",
+  "learner": "roberta-large",
+  "dpc": 100,
+  "k": 200,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 48.15309048816562,
+  "metric": "accuracy",
+  "accuracy_mean": 0.8727064220183487,
+  "accuracy_std": 0.016055045871559648,
+  "scores": [
+    0.8887614678899083,
+    0.856651376146789
+  ]
+}

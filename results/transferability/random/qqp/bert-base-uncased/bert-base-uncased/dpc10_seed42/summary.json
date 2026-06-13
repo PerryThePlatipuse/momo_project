@@ -1,0 +1,20 @@
+{
+  "name": "transfer.random.qqp.bert-base-uncased->bert-base-uncased.dpc10",
+  "method": "random",
+  "task": "qqp",
+  "source": "bert-base-uncased",
+  "target": "bert-base-uncased",
+  "learner": "bert-base-uncased",
+  "dpc": 10,
+  "k": 20,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 57.623702825047076,
+  "metric": "combined_score",
+  "combined_score_mean": 0.5417057806428262,
+  "combined_score_std": 0.024657940635721576,
+  "scores": [
+    0.5170478400071046,
+    0.5663637212785477
+  ]
+}

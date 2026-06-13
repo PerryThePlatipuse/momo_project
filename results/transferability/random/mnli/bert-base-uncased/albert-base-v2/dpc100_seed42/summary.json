@@ -1,0 +1,20 @@
+{
+  "name": "transfer.random.mnli.bert-base-uncased->albert-base-v2.dpc100",
+  "method": "random",
+  "task": "mnli",
+  "source": "bert-base-uncased",
+  "target": "albert-base-v2",
+  "learner": "albert-base-v2",
+  "dpc": 100,
+  "k": 300,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 45.48150363494642,
+  "metric": "accuracy",
+  "accuracy_mean": 0.5168619460010189,
+  "accuracy_std": 0.013652572592969925,
+  "scores": [
+    0.5032093734080489,
+    0.5305145185939888
+  ]
+}

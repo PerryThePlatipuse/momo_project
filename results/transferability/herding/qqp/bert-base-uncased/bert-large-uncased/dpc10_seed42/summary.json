@@ -1,0 +1,20 @@
+{
+  "name": "transfer.herding.qqp.bert-base-uncased->bert-large-uncased.dpc10",
+  "method": "herding",
+  "task": "qqp",
+  "source": "bert-base-uncased",
+  "target": "bert-large-uncased",
+  "learner": "bert-large-uncased",
+  "dpc": 10,
+  "k": 20,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 100.4566996768117,
+  "metric": "combined_score",
+  "combined_score_mean": 0.5914593121612721,
+  "combined_score_std": 0.02573788037170105,
+  "scores": [
+    0.6171971925329732,
+    0.5657214317895711
+  ]
+}

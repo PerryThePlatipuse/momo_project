@@ -1,0 +1,20 @@
+{
+  "name": "transfer.herding.mnli.bert-base-uncased->bert-base-uncased.dpc10",
+  "method": "herding",
+  "task": "mnli",
+  "source": "bert-base-uncased",
+  "target": "bert-base-uncased",
+  "learner": "bert-base-uncased",
+  "dpc": 10,
+  "k": 30,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 35.33711833995767,
+  "metric": "accuracy",
+  "accuracy_mean": 0.3925624044829343,
+  "accuracy_std": 0.017931737137035164,
+  "scores": [
+    0.41049414161996944,
+    0.3746306673458991
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "transfer.k_centers.sst2.bert-base-uncased->albert-base-v2.dpc100",
+  "method": "k_centers",
+  "task": "sst2",
+  "source": "bert-base-uncased",
+  "target": "albert-base-v2",
+  "learner": "albert-base-v2",
+  "dpc": 100,
+  "k": 200,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 20.73785662301816,
+  "metric": "accuracy",
+  "accuracy_mean": 0.8342889908256881,
+  "accuracy_std": 0.006307339449541316,
+  "scores": [
+    0.8279816513761468,
+    0.8405963302752294
+  ]
+}

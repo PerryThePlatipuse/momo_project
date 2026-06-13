@@ -1,0 +1,20 @@
+{
+  "name": "transfer.herding.ag_news.bert-base-uncased->bert-large-uncased.dpc100",
+  "method": "herding",
+  "task": "ag_news",
+  "source": "bert-base-uncased",
+  "target": "bert-large-uncased",
+  "learner": "bert-large-uncased",
+  "dpc": 100,
+  "k": 400,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 87.80082875583321,
+  "metric": "accuracy",
+  "accuracy_mean": 0.8842763157894737,
+  "accuracy_std": 0.002302631578947334,
+  "scores": [
+    0.8819736842105264,
+    0.886578947368421
+  ]
+}

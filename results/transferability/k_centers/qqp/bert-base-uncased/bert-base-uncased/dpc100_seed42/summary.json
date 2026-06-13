@@ -1,0 +1,20 @@
+{
+  "name": "transfer.k_centers.qqp.bert-base-uncased->bert-base-uncased.dpc100",
+  "method": "k_centers",
+  "task": "qqp",
+  "source": "bert-base-uncased",
+  "target": "bert-base-uncased",
+  "learner": "bert-base-uncased",
+  "dpc": 100,
+  "k": 200,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 62.78773720096797,
+  "metric": "combined_score",
+  "combined_score_mean": 0.6898004100206008,
+  "combined_score_std": 0.0042044764380637645,
+  "scores": [
+    0.6940048864586645,
+    0.685595933582537
+  ]
+}

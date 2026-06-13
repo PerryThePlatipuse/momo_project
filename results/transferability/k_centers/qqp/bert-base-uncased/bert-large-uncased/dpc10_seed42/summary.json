@@ -1,0 +1,20 @@
+{
+  "name": "transfer.k_centers.qqp.bert-base-uncased->bert-large-uncased.dpc10",
+  "method": "k_centers",
+  "task": "qqp",
+  "source": "bert-base-uncased",
+  "target": "bert-large-uncased",
+  "learner": "bert-large-uncased",
+  "dpc": 10,
+  "k": 20,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 102.92292881500907,
+  "metric": "combined_score",
+  "combined_score_mean": 0.602928381480659,
+  "combined_score_std": 0.00023533570516792723,
+  "scores": [
+    0.603163717185827,
+    0.6026930457754911
+  ]
+}

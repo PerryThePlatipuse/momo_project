@@ -1,0 +1,20 @@
+{
+  "name": "transfer.k_centers.ag_news.bert-base-uncased->roberta-large.dpc100",
+  "method": "k_centers",
+  "task": "ag_news",
+  "source": "bert-base-uncased",
+  "target": "roberta-large",
+  "learner": "roberta-large",
+  "dpc": 100,
+  "k": 400,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 93.6798607991077,
+  "metric": "accuracy",
+  "accuracy_mean": 0.8911184210526316,
+  "accuracy_std": 0.0020394736842105354,
+  "scores": [
+    0.8931578947368422,
+    0.8890789473684211
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "transfer.random.ag_news.bert-base-uncased->roberta-base.dpc100",
+  "method": "random",
+  "task": "ag_news",
+  "source": "bert-base-uncased",
+  "target": "roberta-base",
+  "learner": "roberta-base",
+  "dpc": 100,
+  "k": 400,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 38.91421299800277,
+  "metric": "accuracy",
+  "accuracy_mean": 0.8834868421052632,
+  "accuracy_std": 6.578947368418575e-05,
+  "scores": [
+    0.883421052631579,
+    0.8835526315789474
+  ]
+}

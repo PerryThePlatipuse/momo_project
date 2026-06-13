@@ -1,0 +1,20 @@
+{
+  "name": "transfer.herding.mnli.bert-base-uncased->roberta-base.dpc10",
+  "method": "herding",
+  "task": "mnli",
+  "source": "bert-base-uncased",
+  "target": "roberta-base",
+  "learner": "roberta-base",
+  "dpc": 10,
+  "k": 30,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 33.03102275915444,
+  "metric": "accuracy",
+  "accuracy_mean": 0.3727967396841569,
+  "accuracy_std": 0.01018848700967906,
+  "scores": [
+    0.38298522669383595,
+    0.3626082526744778
+  ]
+}

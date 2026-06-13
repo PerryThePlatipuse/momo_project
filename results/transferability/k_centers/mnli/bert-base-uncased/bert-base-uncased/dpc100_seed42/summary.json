@@ -1,0 +1,20 @@
+{
+  "name": "transfer.k_centers.mnli.bert-base-uncased->bert-base-uncased.dpc100",
+  "method": "k_centers",
+  "task": "mnli",
+  "source": "bert-base-uncased",
+  "target": "bert-base-uncased",
+  "learner": "bert-base-uncased",
+  "dpc": 100,
+  "k": 300,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 40.726723050000146,
+  "metric": "accuracy",
+  "accuracy_mean": 0.5444727457972491,
+  "accuracy_std": 0.0002037697401935934,
+  "scores": [
+    0.5442689760570555,
+    0.5446765155374427
+  ]
+}

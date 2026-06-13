@@ -1,0 +1,20 @@
+{
+  "name": "transfer.herding.sst2.bert-base-uncased->bert-large-uncased.dpc100",
+  "method": "herding",
+  "task": "sst2",
+  "source": "bert-base-uncased",
+  "target": "bert-large-uncased",
+  "learner": "bert-large-uncased",
+  "dpc": 100,
+  "k": 200,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 45.89809402800165,
+  "metric": "accuracy",
+  "accuracy_mean": 0.8727064220183486,
+  "accuracy_std": 0.0034403669724770714,
+  "scores": [
+    0.8692660550458715,
+    0.8761467889908257
+  ]
+}

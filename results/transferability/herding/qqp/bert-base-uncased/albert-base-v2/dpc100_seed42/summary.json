@@ -1,0 +1,20 @@
+{
+  "name": "transfer.herding.qqp.bert-base-uncased->albert-base-v2.dpc100",
+  "method": "herding",
+  "task": "qqp",
+  "source": "bert-base-uncased",
+  "target": "albert-base-v2",
+  "learner": "albert-base-v2",
+  "dpc": 100,
+  "k": 200,
+  "n_dataset": 1,
+  "seed": 42,
+  "eval_time_sec": 93.48898542183451,
+  "metric": "combined_score",
+  "combined_score_mean": 0.679656314992889,
+  "combined_score_std": 0.012119125749776027,
+  "scores": [
+    0.667537189243113,
+    0.6917754407426651
+  ]
+}
